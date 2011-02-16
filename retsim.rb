@@ -3,13 +3,14 @@ require_relative "player"
 require_relative "lib/algorithms"
 require_relative "event"
 require_relative "mob"
+require_relative "statistics"
 
 include Containers
 
 srand Time.now.to_i
 
 # TODO put in config
-hours = 20
+hours = 250 
 
 # returns a number in [min,max]
 # if passed with no arguments, returns a floating point in [0,1)
@@ -38,11 +39,11 @@ queue = PriorityQueue.instance
 mob = Mob.new
 mob.level = 88
 
-player = Player.new
+player = Player.new(mob)
 player.weapon_speed = 3.6
 player.weapon_dmg_low_end = 1795
 player.weapon_dmg_high_end = 2693
-duration = -1
+
 while current_time < duration
   unless queue.empty?
     event = queue.pop
@@ -58,7 +59,7 @@ while current_time < duration
   end
 
   unless player.is_gcd_locked
-    priority(current_time, char, mob)
+    #  priority(current_time, char, mob)
   end
 
   # autoattack
@@ -66,4 +67,8 @@ while current_time < duration
     player.swing(current_time, mob)
   end
 end
+puts ""
+player.output_stats(mob)
+puts ""
+Statistics.instance.output_table(duration)
 

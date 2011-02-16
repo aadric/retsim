@@ -1,23 +1,24 @@
 class Player
   include CombatConstants
 
-  attr_accessor :lavel
+  attr_accessor :mob
+
+  attr_accessor :level
 
   # state of player
   attr_accessor :is_gcd_locked, :is_on_swing_cooldown
 
-
   # combat ratings from paper doll
-  attr_accessor :hit_rating, :strength, :attack_power, :haste_rating, :crit_rating, :intellect, :expertise_rating
+  attr_accessor :hit_rating, :strength, :agility, :attack_power,
+                :haste_rating, :crit_rating, :intellect, :expertise_rating
 
-  # weapon speed exactly as it appears on the tooltip (ex: 3.6)
-  attr_accessor :weapon_speed
-
-  # weapond damage exactly as it appears on tooltip
-  attr_accessor :weapon_dmg_low_end, :weapon_dmg_high_end
+  # weapon stats exactly as they appear on weapon
+  attr_accessor :weapon_speed, :weapon_dmg_low_end, :weapon_dmg_high_end
 
   # buffs
-  attr_accessor :strength_of_earth_totem, :blessing_of_kings, :attack_power_bonus
+  attr_accessor :strength_of_earth_totem, :blessing_of_kings, :attack_power_bonus, :three_percent_damage_done
+
+  attr_accessor :seal_of_truth
 
   # consumables
   attr_accessor :flask_of_titanic_strength, :strength_from_food
@@ -27,6 +28,12 @@ class Player
 
   attr_accessor :plate_specialization
 
+  # talents
+  attr_accessor :communion, :seals_of_the_pure
+
+  # race
+  attr_accessor :is_draenei
+
   # TODO profession bonuses
 
   # talents
@@ -34,13 +41,28 @@ class Player
   # temporary buffs
   attr_accessor :inquisition
 
-  def initialize()
+  def initialize(mob)
+    @mob = mob  
     @level = 85
     @strength_from_food = 0
+    
+    # Paper Doll
+    @attack_power = 1247
+    @expertise_rating = 0
+    @hit_rating = 0
+    @crit_rating = 137
+    @strength = 506
+    @agility = 94 
+    
+    @communion = true
+    @is_draenei = true
+    @plate_specialization = false 
+    @seal_of_truth = true
+    @seals_of_the_pure = true
   end
 
   def calculated_attack_power
-    ap = @ap
+    ap = @attack_power
     ap += 2 * strength_from_buffs_and_consumables
     ap *= 1.10 if @attack_power_bonus
     ap
@@ -61,7 +83,7 @@ class Player
     str *= 1.05 if @plate_specialization
     str *= 1.05 if @blessing_of_kings
     str += @strength * 0.05 if @blessing_of_kings
-    str
+    return str
   end
 
   def clear
@@ -79,16 +101,172 @@ class Player
 
   # Swing our weapon, doing damage instantly and creating an event when swing timer is up
   def swing(current_time, mob)
-    # calculate damage
-    dmg = calculate_attack_power / 14
-    dmg += random(@weapon_dmg_low_end, @weapon_dmg_high_end)
+    dmg = calculated_attack_power / 14 
+    dmg = dmg * @weapon_speed
 
-    # augment damage by communion
+    dmg += random(@weapon_dmg_low_end, @weapon_dmg_high_end)
+    attack = melee_attack_table
+
+    # Seal of truth can't miss, be dodged, or glance.
+    # It crits independently
+    if @seal_of_truth && [:hit, :crit, :glancing].include?(attack)
+      # Damage is based on number of stacks immediately before hit
+      seal_of_truth_dmg(dmg, mob)
+      if mob.censure_stacks == 0
+        # Create event to proc censure
+        setup_next_censure_tick(current_time)
+      end
+      if mob.censure_stacks < 5
+        mob.censure_stacks = mob.censure_stacks + 1
+      end
+    end
+
+    case attack 
+      when :miss then dmg = 0
+      when :dodge then dmg = 0
+      when :crit then dmg *= 2 # TODO meta gem
+      # No one knows how glancing blows work.  Basic testing shows an average of 25% reduction
+      # However its not a static value.
+      # Easiest to treat it as such until more data is available. 
+      when :glancing then dmg = (dmg * 0.75).round
+    end  
+
+
+    # calculate physical bonus %
+    # from 4% buff
+    # does 4% stack with communion multiplicty or additively?
+
+    # from 3% damage buff
+    #dmg *= 1.03 if @three_percent_damage_done 
+
+    # from communion
+    dmg *= 1.02 if @communion
+
+    # two handed bonus from just being ret
+    dmg *= 1.2
 
     # augment damage by mobs armor
-    
-    # two handed bonus from just being ret
+    dmg *= 1 - mob.damage_reduction_from_armor(@level)
+     
 
     # is aw up?
+    dmg *= 1.2 if @avenging_wrath
+
+
+    dmg = dmg.round
+    Statistics.instance.log_damage_event(:melee, attack, dmg)
+    
+    @is_on_swing_cooldown = true 
+    event = Event.new(self, "swing_off_cooldown", current_time + weapon_speed * 100)
+  end
+
+  def censure_dot_damage(current_time)
+
+  end
+
+  def setup_next_censure_tick(current_time)
+    # http://www.tentonhammer.com/wow/guides/stats/haste-hots-dots
+    # http://elitistjerks.com/f80/t112939-affliction_cataclysm_%7C_dots_you_4_0_6_updated/#Haste
+    # new tick = base tick / (1 + haste %)
+    next_tick = 3 / (1 + calculated_haste(:spell) / 100) # in seconds
+    event = Event.new(self, "censure_dot_damage", current_time + next_tick * 100)
+  end
+
+  # returns haste in % for either melee or spells
+  def calculated_haste(type = :melee)
+    return @haste_rating / 128.05701 
+  end
+
+
+  def swing_off_cooldown(time)
+    @is_on_swing_cooldown = false
+  end
+
+  def seal_of_truth_dmg(weapon_dmg, mob)
+    return if mob.censure_stacks == 0 
+
+    # Seal of Truth has a very poor tooltip
+    # Seems to deal about 3% weapon damage per stack
+    dmg = (mob.censure_stacks * 0.03)
+    dmg *= weapon_dmg
+
+    dmg *= 1.02 if @communion
+
+    dmg *= 1.12 if @seals_of_the_pure
+
+    # two handed specialization
+    dmg *= 1.2 
+
+    attack = :hit
+
+    # Seal of truth can't miss, be dodged, or glance 
+    if rand < melee_crit_chance
+      dmg *= 2
+      attack = :crit
+    end
+
+    Statistics.instance.log_damage_event(:seal_of_truth, :hit, dmg.round)
+  end
+
+  def melee_miss_chance
+    # TODO replace with mob base hit _chance
+    melee_miss_chance = 0.08
+
+    # TODO replace with constant
+    melee_miss_chance -= @hit_rating / 120.109 / 100
+
+    melee_miss_chance -= 0.01 if @is_draenei
+
+    return [melee_miss_chance, 0].max
+  end
+
+  def melee_dodge_chance
+    melee_dodge_chance = 0.065
+    
+    melee_dodge_chance -= 0.025 if @seal_of_truth
+
+    melee_dodge_chance -= @expertise_rating / 120.109 / 100
+ 
+    return [melee_dodge_chance,0].max
+  end
+
+  def melee_crit_chance
+    melee_crit_chance = 0.00652
+
+    melee_crit_chance += @crit_rating / 179.28 / 100
+
+    melee_crit_chance += calculated_agility / 203.08 / 100
+
+    melee_crit_chance -= 0.048
+
+    return [0, melee_crit_chance].max
+  end
+
+  def melee_attack_table
+    attack = random
+    
+    # Everyone's best guess is glancing blows are 24%, but might be 25% needs
+    # more testing
+    if(attack < 0.24) then return :glancing else attack -= 0.24 end
+    if(attack < melee_miss_chance) then return :miss else attack -= melee_miss_chance end
+    if(attack < melee_dodge_chance) then return :dodge else attack -= melee_dodge_chance end
+    if(attack < melee_crit_chance) then return :crit end
+    return :hit
+  end
+
+  def calculated_agility
+    return @agility
+  end
+
+
+  def output_stats(mob)
+    left_spacing = 25
+    puts "Agility".ljust(left_spacing) + @agility.to_s
+    puts "Melee Crit Chance".ljust(left_spacing) + melee_crit_chance.to_s
+    puts "Melee Miss Chance".ljust(left_spacing) + melee_miss_chance.to_s
+    puts "Melee Dodge Chance".ljust(left_spacing) + melee_dodge_chance.to_s
+    puts "Calculated Attack Power".ljust(left_spacing) + calculated_attack_power.to_s
+    puts "Calculated Strength".ljust(left_spacing) + calculated_strength.to_s
+    puts "Armor Reduction".ljust(left_spacing) + mob.damage_reduction_from_armor(@level).to_s
   end
 end
