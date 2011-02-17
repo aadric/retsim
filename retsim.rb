@@ -10,7 +10,7 @@ include Containers
 srand Time.now.to_i
 
 # TODO put in config
-hours = 250 
+hours = 80 
 
 # returns a number in [min,max]
 # if passed with no arguments, returns a floating point in [0,1)

@@ -51,7 +51,7 @@ class Statistics
           value2.each do |key3, value3|
             f.puts "    " + key3.to_s.ljust(10) + " = " + value3.to_s
           end
-          f.puts "    " + "Average".ljust(10) + " = " + (value2[:damage] / value2[:count]).round.to_s
+          f.puts "    " + "Average".ljust(10) + " = " + (value2[:damage].to_f / value2[:count]).round.to_s
         end
       end
     end

@@ -16,7 +16,8 @@ class Player
   attr_accessor :weapon_speed, :weapon_dmg_low_end, :weapon_dmg_high_end
 
   # buffs
-  attr_accessor :strength_of_earth_totem, :blessing_of_kings, :attack_power_bonus, :three_percent_damage_done
+  attr_accessor :strength_of_earth_totem, :blessing_of_kings, :attack_power_bonus, :three_percent_damage_done,
+                :ten_percent_spell_power
 
   attr_accessor :seal_of_truth
 
@@ -29,7 +30,10 @@ class Player
   attr_accessor :plate_specialization
 
   # talents
-  attr_accessor :communion, :seals_of_the_pure
+  attr_accessor :communion,         # true / false
+                :seals_of_the_pure, # ??? 
+                :inquiry_of_faith,  # 0,1,2,3
+                :seals_of_command   # true / false
 
   # race
   attr_accessor :is_draenei
@@ -53,12 +57,16 @@ class Player
     @crit_rating = 137
     @strength = 506
     @agility = 94 
+    @haste_rating = 0
+    @intellect = 100
     
     @communion = true
     @is_draenei = true
     @plate_specialization = false 
     @seal_of_truth = true
     @seals_of_the_pure = true
+    @inquiry_of_faith = 3
+    @seals_of_command = true
   end
 
   def calculated_attack_power
@@ -99,27 +107,40 @@ class Player
     @swing_on_cooldown = false
   end
 
-  # Swing our weapon, doing damage instantly and creating an event when swing timer is up
-  def swing(current_time, mob)
-    dmg = calculated_attack_power / 14 
-    dmg = dmg * @weapon_speed
+
+  # Returns weapon damage at this exact moment
+  def weapon_damage
+    dmg = calculated_attack_power / 14
+    dmg *= @weapon_speed
 
     dmg += random(@weapon_dmg_low_end, @weapon_dmg_high_end)
-    attack = melee_attack_table
+  end
 
-    # Seal of truth can't miss, be dodged, or glance.
-    # It crits independently
-    if @seal_of_truth && [:hit, :crit, :glancing].include?(attack)
-      # Damage is based on number of stacks immediately before hit
-      seal_of_truth_dmg(dmg, mob)
-      if mob.censure_stacks == 0
-        # Create event to proc censure
-        setup_next_censure_tick(current_time)
+  # Swing our weapon, doing damage instantly and creating an event when swing timer is up
+  def swing(current_time, mob)
+    dmg = weapon_damage
+    
+    attack = attack_table(:autoattack)
+
+    if [:hit, :crit, :glancing].include?(attack)
+      # Seal of truth can't miss, be dodged, or glance.
+      # It crits independently
+      if @seal_of_truth
+        # Damage is based on number of stacks immediately before hit
+        seal_of_truth_dmg(dmg)
+        if mob.censure_stacks == 0
+          # Create event to proc censure
+          setup_next_censure_tick(current_time)
+        end
+        if mob.censure_stacks < 5
+          mob.censure_stacks = mob.censure_stacks + 1
+        end
       end
-      if mob.censure_stacks < 5
-        mob.censure_stacks = mob.censure_stacks + 1
-      end
+
+      seals_of_command_dmg(dmg) if @seals_of_command
     end
+
+
 
     case attack 
       when :miss then dmg = 0
@@ -161,7 +182,32 @@ class Player
   end
 
   def censure_dot_damage(current_time)
+    if(mob.censure_stacks <= 0 or mob.censure_stacks > 5)
+      # This shouldn't ever happen
+      raise "Censure Stack Error"
+    end
 
+    dmg = 0.0192 * calculated_attack_power
+    dmg += 0.01 * calculated_spell_power
+    dmg *= mob.censure_stacks
+
+    dmg *= magic_bonus_multiplier(:holy)
+
+    percent_bonus = @inquiry_of_faith * 0.1 
+    percent_bonus += 0.12 if @seals_of_the_pure
+    multiplier = 1 + percent_bonus
+    dmg *= multiplier
+
+    dmg *= 1.2 if @avenging_wrath
+
+    attack = :hit
+    if random < melee_crit_chance
+      dmg *= crit_multiplier(:physical)
+      attack = :crit
+    end
+
+    Statistics.instance.log_damage_event(:censure, attack, dmg.round)
+    setup_next_censure_tick(current_time)
   end
 
   def setup_next_censure_tick(current_time)
@@ -177,16 +223,52 @@ class Player
     return @haste_rating / 128.05701 
   end
 
+  # Spell power from tooltip at this exact moment in time
+  def calculated_spell_power
+    sp = @intellect - 10
+    sp += calculated_attack_power * 0.3 
+    sp *= 1.1 if @ten_percent_spell_power
+    return sp
+  end
 
   def swing_off_cooldown(time)
     @is_on_swing_cooldown = false
   end
 
-  def seal_of_truth_dmg(weapon_dmg, mob)
+  def magic_bonus_multiplier(magic_type = :holy)
+    percent = @communion ? 0.02 : 0
+    precent += 0.03 if @three_percent_damage_done # TODO find out why this is additive, should be easy to check
+    multiplier = 1 + percent
+    multiplier *= 1.08 if mob.eight_percent_spell_damage_taken
+    multiplier *= 1.3 if @inquisition and magic_type == :holy
+    return multiplier
+  end 
+
+
+  def seals_of_command_dmg(weapon_dmg)
+    dmg = 0.07 * weapon_dmg
+    dmg *= magic_bonus_multiplier(:holy)
+    dmg *= 1.2 # two handed specialization
+    dmg *= 1.2 if @avenging_wrath
+
+    # Seals of Command can miss and can be dodged, but can't be a glancing blow
+    attack = attack_table(:special)
+
+    case attack
+      when :crit then dmg *= 2 
+      when :miss then dmg = 0
+      when :dodge then dmg = 0
+    end
+    
+    Statistics.instance.log_damage_event(:seals_of_command, attack, dmg.round)
+
+  end
+
+  def seal_of_truth_dmg(weapon_dmg)
     return if mob.censure_stacks == 0 
 
     # Seal of Truth has a very poor tooltip
-    # Seems to deal about 3% weapon damage per stack
+    # Seems to deal 3% weapon damage per stack
     dmg = (mob.censure_stacks * 0.03)
     dmg *= weapon_dmg
 
@@ -200,8 +282,8 @@ class Player
     attack = :hit
 
     # Seal of truth can't miss, be dodged, or glance 
-    if rand < melee_crit_chance
-      dmg *= 2
+    if random < melee_crit_chance
+      dmg *= crit_multiplier(:physical)
       attack = :crit
     end
 
@@ -242,12 +324,23 @@ class Player
     return [0, melee_crit_chance].max
   end
 
-  def melee_attack_table
+  # Calculates crit multiplier for physical or magical attacks
+  def crit_multiplier(type = :physical)
+    raise "Wrong parameters for crit_multiplier" unless [:physical, :magic].include?(type) # in case I accidently try to pass :melee
+
+    multiplier = type == :physical ? 2 : 1.5
+    multiplier *= 1.03 if @crit_meta_gem
+    multiplier
+  end
+
+  def attack_table(type = :autoattack)
     attack = random
     
     # Everyone's best guess is glancing blows are 24%, but might be 25% needs
     # more testing
-    if(attack < 0.24) then return :glancing else attack -= 0.24 end
+    if(type == :autoattack) 
+      if(attack < 0.24) then return :glancing else attack -= 0.24 end
+    end
     if(attack < melee_miss_chance) then return :miss else attack -= melee_miss_chance end
     if(attack < melee_dodge_chance) then return :dodge else attack -= melee_dodge_chance end
     if(attack < melee_crit_chance) then return :crit end
