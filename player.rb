@@ -16,7 +16,8 @@ class Player
   attr_accessor :weapon_speed, :weapon_dmg_low_end, :weapon_dmg_high_end
 
   # buffs
-  attr_accessor :strength_of_earth_totem, :blessing_of_kings, :attack_power_bonus, :three_percent_damage_done,
+  attr_accessor :strength_of_earth_totem,
+                :blessing_of_kings, :attack_power_bonus, :three_percent_damage_done,
                 :ten_percent_spell_power
 
   attr_accessor :seal_of_truth
@@ -51,14 +52,15 @@ class Player
     @strength_from_food = 0
     
     # Paper Doll
+    @strength = 506
+    @agility = 94 
+    @intellect = 106
+
     @attack_power = 1247
     @expertise_rating = 0
     @hit_rating = 0
     @crit_rating = 137
-    @strength = 506
-    @agility = 94 
     @haste_rating = 0
-    @intellect = 100
     
     @communion = true
     @is_draenei = true
@@ -67,6 +69,7 @@ class Player
     @seals_of_the_pure = true
     @inquiry_of_faith = 3
     @seals_of_command = true
+    @three_percent_damage_done = true
   end
 
   def calculated_attack_power
@@ -133,6 +136,8 @@ class Player
           setup_next_censure_tick(current_time)
         end
         if mob.censure_stacks < 5
+          # This is cheating as censure actually has a chance to miss 
+          # based on spell hit.
           mob.censure_stacks = mob.censure_stacks + 1
         end
       end
@@ -148,8 +153,8 @@ class Player
       when :crit then dmg *= 2 # TODO meta gem
       # No one knows how glancing blows work.  Basic testing shows an average of 25% reduction
       # However its not a static value.
-      # Easiest to treat it as such until more data is available. 
-      when :glancing then dmg = (dmg * 0.75).round
+      # This falls in line with limited testing (500 swings)
+      when :glancing then dmg = (dmg * random(67,83)/100).round
     end  
 
 
@@ -158,7 +163,7 @@ class Player
     # does 4% stack with communion multiplicty or additively?
 
     # from 3% damage buff
-    #dmg *= 1.03 if @three_percent_damage_done 
+    dmg *= 1.03 if @three_percent_damage_done 
 
     # from communion
     dmg *= 1.02 if @communion
@@ -200,6 +205,7 @@ class Player
 
     dmg *= 1.2 if @avenging_wrath
 
+
     attack = :hit
     if random < melee_crit_chance
       dmg *= crit_multiplier(:physical)
@@ -237,7 +243,7 @@ class Player
 
   def magic_bonus_multiplier(magic_type = :holy)
     percent = @communion ? 0.02 : 0
-    precent += 0.03 if @three_percent_damage_done # TODO find out why this is additive, should be easy to check
+    percent += 0.03 if @three_percent_damage_done # TODO find out why this is additive, should be easy to check
     multiplier = 1 + percent
     multiplier *= 1.08 if mob.eight_percent_spell_damage_taken
     multiplier *= 1.3 if @inquisition and magic_type == :holy
@@ -272,7 +278,7 @@ class Player
     dmg = (mob.censure_stacks * 0.03)
     dmg *= weapon_dmg
 
-    dmg *= 1.02 if @communion
+    dmg *= magic_bonus_multiplier(:holy)
 
     dmg *= 1.12 if @seals_of_the_pure
 
