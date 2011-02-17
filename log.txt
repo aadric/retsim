@@ -1,4 +1,0 @@
-Duration 72000 seconds
-DPS 425.04790342208037
-                         Dmg     Misses  Hits   Min Hit  Max Hit  Avg Hit  Crits   Min Crit  Max Crit  Avg Crit  Dot Count Avg Dot  
-Melee                    100.0%  8.85%   91.15% 1549.11178279496432287.48884274712831920.03570151137390.0%    0         0         0         0         0        30603449.046389790         0         
