@@ -16,9 +16,10 @@ class Player
   attr_accessor :weapon_speed, :weapon_dmg_low_end, :weapon_dmg_high_end
 
   # buffs
-  attr_accessor :strength_of_earth_totem,
-                :blessing_of_kings, :attack_power_bonus, :three_percent_damage_done,
-                :ten_percent_spell_power
+  attr_accessor :strength_of_earth_totem, :blessing_of_kings, :attack_power_bonus,
+                :three_percent_damage_done,
+                :ten_percent_spell_power,
+                :buff_four_percent_physical # true / false, doesn't support 2% right now
 
   attr_accessor :seal_of_truth
 
@@ -34,7 +35,8 @@ class Player
   attr_accessor :communion,         # true / false
                 :seals_of_the_pure, # ??? 
                 :inquiry_of_faith,  # 0,1,2,3
-                :seals_of_command   # true / false
+                :seals_of_command,  # true / false
+                :talent_crusade     # 0,1,2,3
 
   # race
   attr_accessor :is_draenei
@@ -250,6 +252,14 @@ class Player
     return multiplier
   end 
 
+  def physical_bonus_multiplier
+    percent = @communion ? 0.02 : 0
+    percent += 0.04 if @buff_four_percent_physical
+    multiplier = 1 + percent
+    multiplier *= 1.03 if @three_percent_damage_done # TODO why is this multiplicative here and additve in magic?
+    return multiplier
+  end
+
 
   def seals_of_command_dmg(weapon_dmg)
     dmg = 0.07 * weapon_dmg
@@ -327,7 +337,7 @@ class Player
 
     melee_crit_chance -= 0.048
 
-    return [0, melee_crit_chance].max
+    return melee_crit_chance
   end
 
   # Calculates crit multiplier for physical or magical attacks
@@ -339,9 +349,11 @@ class Player
     multiplier
   end
 
-  def attack_table(type = :autoattack)
+  def attack_table(type = :autoattack, crit_chance = nil)
     attack = random
     
+    crit_chance = melee_crit_chance unless crit_chance
+
     # Everyone's best guess is glancing blows are 24%, but might be 25% needs
     # more testing
     if(type == :autoattack) 
@@ -349,7 +361,7 @@ class Player
     end
     if(attack < melee_miss_chance) then return :miss else attack -= melee_miss_chance end
     if(attack < melee_dodge_chance) then return :dodge else attack -= melee_dodge_chance end
-    if(attack < melee_crit_chance) then return :crit end
+    if(attack < crit_chance) then return :crit end
     return :hit
   end
 
