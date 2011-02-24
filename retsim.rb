@@ -5,6 +5,8 @@ require_relative "event"
 require_relative "mob"
 require_relative "statistics"
 
+Dir["abilities/*.rb"].each {|file| require_relative file}
+
 include Containers
 
 srand Time.now.to_i
@@ -23,15 +25,18 @@ def random(min=0, max=0)
 end
 
 # in miliseconds
-duration = hours * 360000
+duration = hours * 60 * 60 * 1000
 
 # when to show * on progress bar
 tick = duration / 80
 
 current_time = 0
 
-def priority(current_time, char, mob)
-
+def priority(current_time, player, mob)
+  if player.crusader_strike.cooldown_remaining(current_time) == 0
+    player.crusader_strike.use(current_time)
+    return
+  end
 end
 
 queue = PriorityQueue.instance
@@ -59,7 +64,7 @@ while current_time < duration
   end
 
   unless player.is_gcd_locked
-    #  priority(current_time, char, mob)
+    priority(current_time, player, mob)
   end
 
   # autoattack

@@ -40,8 +40,8 @@ class Statistics
 #    File.open("log.txt", 'w') do |f|
     f = STDOUT
     begin
-      f.puts "Duration " + (duration/100).to_s + " seconds"
-      f.puts "DPS " + (total_damage/(duration/100)).to_s
+      f.puts "Duration " + (duration/1000).to_s + " seconds"
+      f.puts "DPS " + (total_damage/(duration/1000)).to_s
       f.puts
       @hash.each do |key, value|
         f.puts key.to_s.gsub(/_/,' ').gsub(/\b([a-z])/){$1.capitalize}.ljust(15)

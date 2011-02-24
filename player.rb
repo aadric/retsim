@@ -6,7 +6,9 @@ class Player
   attr_accessor :level
 
   # state of player
-  attr_accessor :is_gcd_locked, :is_on_swing_cooldown
+  attr_accessor :is_gcd_locked,
+                :is_on_swing_cooldown,
+                :holy_power             # 0,1,2,3
 
   # combat ratings from paper doll
   attr_accessor :hit_rating, :strength, :agility, :attack_power,
@@ -26,16 +28,19 @@ class Player
   attr_accessor :flask_of_titanic_strength, :strength_from_food
 
   # glyphs
-  attr_accessor :glyph_of_seal_of_truth
+  attr_accessor :glyph_of_seal_of_truth,
+                :glyph_of_crusader_strike
 
   attr_accessor :plate_specialization
 
   # talents
-  attr_accessor :communion,         # true / false
-                :seals_of_the_pure, # ??? 
-                :inquiry_of_faith,  # 0,1,2,3
-                :seals_of_command,  # true / false
-                :talent_crusade     # 0,1,2,3
+  attr_accessor :communion,                       # true / false
+                :seals_of_the_pure,               # ??? 
+                :inquiry_of_faith,                # 0,1,2,3
+                :seals_of_command,                # true / false
+                :talent_crusade,                  # 0,1,2,3
+                :talent_rule_of_law,              # 0,1,2,3
+                :talent_sanctity_of_battle        # true / false
 
   # race
   attr_accessor :is_draenei
@@ -45,7 +50,11 @@ class Player
   # talents
   
   # temporary buffs
-  attr_accessor :inquisition
+  attr_accessor :inquisition,
+                :avenging_wrath
+
+  # abilities
+  attr_accessor :crusader_strike
 
   def initialize(mob)
     @mob = mob  
@@ -69,6 +78,9 @@ class Player
     @seals_of_the_pure = true
     @inquiry_of_faith = 3
     @seals_of_command = true
+
+    # abilities
+    @crusader_strike = CrusaderStrike.new(self, mob)
   end
 
   def calculated_attack_power
@@ -102,7 +114,7 @@ class Player
   end
 
   def clear_gcd(time)
-    @gcd_locked = false
+    @is_gcd_locked = false
   end
 
   def clear_swing_timer(time)
@@ -180,7 +192,7 @@ class Player
     Statistics.instance.log_damage_event(:melee, attack, dmg)
     
     @is_on_swing_cooldown = true 
-    event = Event.new(self, "swing_off_cooldown", current_time + weapon_speed * 100)
+    event = Event.new(self, "swing_off_cooldown", current_time + weapon_speed * 1000)
   end
 
   def censure_dot_damage(current_time)
@@ -217,7 +229,7 @@ class Player
     # http://elitistjerks.com/f80/t112939-affliction_cataclysm_%7C_dots_you_4_0_6_updated/#Haste
     # new tick = base tick / (1 + haste %)
     next_tick = 3 / (1 + calculated_haste(:spell) / 100) # in seconds
-    event = Event.new(self, "censure_dot_damage", current_time + next_tick * 100)
+    event = Event.new(self, "censure_dot_damage", current_time + next_tick * 1000)
   end
 
   # returns haste in % for either melee or spells
