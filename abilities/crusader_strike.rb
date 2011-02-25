@@ -61,9 +61,7 @@ class CrusaderStrike
     # (1+('Talents, Buffs, Enchants'!K24+'Talents, Buffs, Enchants'!H34+Gear!S9+J12)%/'Base Numbers'!B6)
     cooldown = 4.5
     return cooldown unless @player.talent_sanctity_of_battle
-    cooldown /= 1.09 if @player.personal_buff_nine_percent_haste
-    cooldown /= 1.05 if @player.buff_five_percent_spell_haste
-    cooldown /= 1 + @player.calculated_haste / 100
+    cooldown /= 1 + @player.calculated_haste(:magic) / 100
     return cooldown
   end
 

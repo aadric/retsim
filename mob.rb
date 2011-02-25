@@ -1,5 +1,5 @@
 class Mob
-  attr_accessor :level, :type
+  attr_accessor :level, :type, :armor
 
   # Debuffs
   attr_accessor :debuff_armor,            # -12% armor, Faerie Fire, Sunder Armor, etc
@@ -11,10 +11,7 @@ class Mob
   attr_accessor :censure_stacks
 
   def initialize()
-    @level = 83
-    @armor = 11977
     @censure_stacks = 0
-    @type = :unknown
   end
 
 

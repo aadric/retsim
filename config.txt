@@ -1,6 +1,72 @@
 # Comment
 
 # this line is actually important
-== PLAYER ==
-talent_seals_of_command = true
-talent_sanctity_of_battle = false # A comment
+++ PLAYER ++
+
+# General
+level = 85
+race = draenei # draenei
+
+# Stats from paper doll
+intellect = 106
+strength  = 506
+agility   = 94
+
+hit_rating        = 0
+attack_power      = 1247
+haste_rating      = 0
+crit_rating       = 137
+expertise_rating  = 0
+                
+
+# weapon stats exactly as they appear on weapon (NOT paper doll)
+weapon_speed        = 3.6
+weapon_dmg_low_end  = 1795
+weapon_dmg_high_end = 2693
+
+# Raid Buffs, all true/false
+buff_stats                = true 
+buff_crit                 = false 
+buff_damage               = true 
+buff_spell_haste          = false 
+buff_spell_power_major    = false 
+buff_spell_power_minor    = false 
+buff_physical_haste       = false 
+buff_attack_power         = false 
+buff_strength_and_agility = false 
+
+# Seals: seal_of_truth
+seal = seal_of_truth
+
+# Consumables
+flask_of_titanic_strength = false # true / false
+strength_from_food = 0 # integer
+
+# Glyphs, true/false
+glyph_of_seal_of_truth = true
+glyph_of_exorcism = true
+glyph_of_crusader_strike = true
+
+plate_specialization = false   # true / false
+
+# Talents, some are true/false, others are ints
+talent_communion = true           # true / false
+talent_seals_of_the_pure = 2      # 0,1,2
+talent_inquiry_of_faith = 3       # 0,1,2,3
+talent_seals_of_command = true    # true / false
+talent_crusade = 3                # 0,1,2,3
+talent_rule_of_law = 3            # 0,1,2,3
+talent_sanctity_of_battle = true  # true / false
+talent_blazing_light = 2          # 0,1,2
+talent_art_of_war = 3             # 0,1,2,3
+#
+
+++ MOB ++
+level = 88
+type = unknown
+armor = 11977
+
+debuff_armor = false
+debuff_physical_damage = false  # 4% physical damage.  Brittle Bones, Blood Frenzy, etc
+debuff_spell_damage = false     # 8% spell damage. Master Poisoner, Curse of Elements, etc
+debuff_spell_crit = false       # 5% spell crit. Critical Mass, Shadow and Flame, etc

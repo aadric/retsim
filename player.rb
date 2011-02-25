@@ -59,37 +59,11 @@ class Player
 
   def initialize(mob)
     @mob = mob  
-    @level = 85
-    @strength_from_food = 0
     @holy_power = 0
-    
-    # Paper Doll
-    @strength = 506
-    @agility = 94 
-    @intellect = 106
-
-    @attack_power = 1247
-    @expertise_rating = 0
-    @hit_rating = 0
-    @crit_rating = 137
-    @haste_rating = 0
-    
-    @talent_communion = true
-    @race = :draenei
-    @plate_specialization = false 
-    @seal = :seal_of_truth
-    @talent_seals_of_the_pure = 2
-    @talent_inquiry_of_faith = 3
-    @talent_seals_of_command = true
 
     # abilities
     @crusader_strike = CrusaderStrike.new(self, @mob)
     @exorcism = Exorcism.new(self, @mob)
-    @buff_damage = true
-
-    @glyph_of_exorcism = true
-
-    @talent_art_of_war = 3
   end
 
   def calculated_attack_power
@@ -253,10 +227,10 @@ class Player
   def calculated_haste(type = :physical)
     raise "Wrong parameters for calculated_haste" unless [:physical, :magic].include?(type) # in case I accidently try to pass :melee or :spell
     haste = @haste_rating / 128.05701 
-    haste += 0.03 * @talent_judgements_of_the_pure if @talent_judgements_of_the_pure
-    haste += 0.05 if @buff_spell_haste and type == :magic
-    haste += 0.10 if @buff_melee_haste and type == :physical
-    haste += 0.30 if @temporary_buff_heroism
+    haste += 3 * @talent_judgements_of_the_pure if @talent_judgements_of_the_pure # TODO actually model this instead of cheating
+    haste += 5 if @buff_spell_haste and type == :magic
+    haste += 10 if @buff_melee_haste and type == :physical
+    haste += 30 if @temporary_buff_heroism
     return haste
   end
 

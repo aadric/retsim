@@ -44,21 +44,50 @@ def priority(current_time, player, mob)
   end
 end
 
+def convert_value(value)
+  return true if value =~ /^true$/i
+  return false if value =~ /^false$/i
+
+  return value.to_i if value =~ /^\d+$/
+  return value.to_f if value =~ /^\d*\.\d+$/
+  return value[1..-1].to_sym if value =~ /^:\w+$/
+  return value.to_sym if value =~ /^\w+$/
+  return nil
+end
+
+def config_parser(filename, player, mob) 
+  obj = nil
+  File.foreach(filename) do |line|
+    line.strip!
+    if(line[0] != "#" and line =~ /\S/)
+      # Strip trailing comments
+      line.sub!(/#.*$/, "")
+
+      if line =~ /.*=.*/ and !obj.nil?
+        i = line.index('=')
+        operator = line[0..i-1].strip
+        value = line[i+1..-1].strip
+        value = convert_value(value)
+        obj.send(operator+"=", value)
+      else 
+        obj = player if line == "++ PLAYER ++"
+        obj = mob if line == "++ MOB ++"
+      end
+    end
+  end
+end
+
 queue = PriorityQueue.instance
 
 mob = Mob.new
 mob.level = 88
 
 player = Player.new(mob)
-player.weapon_speed = 3.6
-player.weapon_dmg_low_end = 1795
-player.weapon_dmg_high_end = 2693
 
 
-puts @player.talent_seals_of_command.to_s
-puts @player.talent_sanctity_of_battle.to_s
+config_parser("config.txt", player, mob)
 
-exit
+
 
 player.swing(current_time)
 while current_time < duration
