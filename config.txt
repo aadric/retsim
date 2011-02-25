@@ -1,0 +1,6 @@
+# Comment
+
+# this line is actually important
+== PLAYER ==
+talent_seals_of_command = true
+talent_sanctity_of_battle = false # A comment

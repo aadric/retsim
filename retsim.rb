@@ -12,7 +12,7 @@ include Containers
 srand Time.now.to_i
 
 # TODO put in config
-hours = 180 
+hours = 20 
 
 # returns a number in [min,max]
 # if passed with no arguments, returns a floating point in [0,1)
@@ -37,6 +37,11 @@ def priority(current_time, player, mob)
     player.crusader_strike.use(current_time)
     return
   end
+
+  if player.exorcism.art_of_war_proc
+    player.exorcism.use(current_time)
+    return
+  end
 end
 
 queue = PriorityQueue.instance
@@ -49,6 +54,13 @@ player.weapon_speed = 3.6
 player.weapon_dmg_low_end = 1795
 player.weapon_dmg_high_end = 2693
 
+
+puts @player.talent_seals_of_command.to_s
+puts @player.talent_sanctity_of_battle.to_s
+
+exit
+
+player.swing(current_time)
 while current_time < duration
   unless queue.empty?
     event = queue.pop
@@ -66,14 +78,9 @@ while current_time < duration
   unless player.is_gcd_locked
     priority(current_time, player, mob)
   end
-
-  # autoattack
-  unless player.is_on_swing_cooldown
-    player.swing(current_time, mob)
-  end
 end
+
 puts ""
-player.output_stats(mob)
+player.output_stats
 puts ""
 Statistics.instance.output_table(duration)
-

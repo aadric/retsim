@@ -1,6 +1,5 @@
 class Event
   attr_reader :time, :indentifier
-  attr_accessor :dead
 
   def initialize(obj, method_name, time, identifier = :unknown)
     @obj = obj
@@ -13,6 +12,10 @@ class Event
   
   def execute
     @obj.send(@method_name, time) unless @dead
+  end
+
+  def kill
+    @dead = true
   end
 
 end
