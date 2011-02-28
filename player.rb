@@ -33,6 +33,7 @@ class Player
   # glyphs
   attr_accessor :glyph_of_seal_of_truth,
                 :glyph_of_exorcism,
+                :glyph_of_templars_verdict,
                 :glyph_of_crusader_strike
 
   attr_accessor :plate_specialization   # true / false
@@ -40,22 +41,28 @@ class Player
   # talents
   attr_accessor :talent_communion,                # true / false
                 :talent_seals_of_the_pure,        # 0,1,2
+                :talent_santified_wrath,          # 0,1,2,3
                 :talent_inquiry_of_faith,         # 0,1,2,3
                 :talent_seals_of_command,         # true / false
                 :talent_crusade,                  # 0,1,2,3
                 :talent_rule_of_law,              # 0,1,2,3
                 :talent_sanctity_of_battle,       # true / false
                 :talent_blazing_light,            # 0,1,2
+                :talent_judgements_of_the_pure,   # 0,1,2,3
+                :talent_arbiter_of_the_light,     # 0,1,2
                 :talent_art_of_war                # 0,1,2,3
+
+  # Set Bonuses
+  attr_accessor :set_bonus_t11_two_piece  # true / false
 
 
   # TODO profession bonuses
 
   # temporary buffs
-  attr_accessor :inquisition, :avenging_wrath, :heroism
+  attr_accessor :inquisition, :avenging_wrath, :heroism, :divine_purpose_proc
 
   # abilities
-  attr_accessor :crusader_strike, :exorcism
+  attr_accessor :crusader_strike, :exorcism, :templars_verdict, :holy_wrath
 
   def initialize(mob)
     @mob = mob  
@@ -64,17 +71,23 @@ class Player
     # abilities
     @crusader_strike = CrusaderStrike.new(self, @mob)
     @exorcism = Exorcism.new(self, @mob)
+    @templars_verdict = TemplarsVerdict.new(self, @mob)
+    @holy_wrath = HolyWrath.new(self, @mob)
   end
 
   def calculated_attack_power
     ap = @attack_power
     ap += 2 * strength_from_buffs_and_consumables
     ap *= 1.10 if @buff_attack_power
-    ap
+    ap.round
   end
 
   def calculated_strength
     @strength + strength_from_buffs_and_consumables
+  end
+
+  def calculated_intellect
+    @intellect + intellect_from_buffs_and_consumables
   end
 
   # returns strength from buffs and consumables
@@ -88,7 +101,14 @@ class Player
     str *= 1.05 if @plate_specialization
     str *= 1.05 if @buff_stats
     str += @strength * 0.05 if @buff_stats
-    return str
+    return str.round
+  end
+
+  def intellect_from_buffs_and_consumables
+    int = 0
+    
+    int += @intellect * 0.05 if @buff_stats
+    return int.round
   end
 
   def clear
@@ -96,11 +116,11 @@ class Player
     @swinging = false
   end
 
-  def clear_gcd(time)
+  def clear_gcd
     @is_gcd_locked = false
   end
 
-  def clear_swing_timer(time)
+  def clear_swing_timer
     @swing_on_cooldown = false
   end
 
@@ -114,7 +134,7 @@ class Player
   end
 
   # Swing our weapon, doing damage instantly and creating an event when swing timer is up
-  def swing(current_time)
+  def swing
     dmg = weapon_damage
     
     attack = attack_table(:autoattack)
@@ -127,7 +147,7 @@ class Player
         seal_of_truth_dmg(dmg)
         if @mob.censure_stacks == 0
           # Create event to proc censure
-          setup_next_censure_tick(current_time)
+          setup_next_censure_tick
         end
         if @mob.censure_stacks < 5
           # This is cheating as censure actually has a chance to miss 
@@ -174,18 +194,18 @@ class Player
 
 
     dmg = dmg.round
-    Statistics.instance.log_damage_event(:melee, attack, dmg)
+    @mob.deal_damage(:melee, attack, dmg)
     
     swing_speed = @weapon_speed / (1 + calculated_haste(:physical) / 100)
-    event = Event.new(self, "swing", current_time + swing_speed * 1000)
+    event = Event.new(self, "swing", swing_speed)
     
     if @talent_art_of_war and [:hit, :crit, :glancing].include?(attack)
       proc_chance = [0.20, 0.07 * @talent_art_of_war].min # 0.00, 0.07, 0.14, 0.20
-      @exorcism.proc_art_of_war(current_time) if random < proc_chance
+      @exorcism.proc_art_of_war if random < proc_chance
     end
   end
 
-  def censure_dot_damage(current_time)
+  def censure_dot_damage
     if(@mob.censure_stacks <= 0 or @mob.censure_stacks > 5)
       # This shouldn't ever happen
       raise "Censure Stack Error"
@@ -211,16 +231,15 @@ class Player
       attack = :crit
     end
 
-    Statistics.instance.log_damage_event(:censure, attack, dmg.round)
-    setup_next_censure_tick(current_time)
+    @mob.deal_damage(:censure, attack, dmg.round)
+    setup_next_censure_tick
   end
 
-  def setup_next_censure_tick(current_time)
+  def setup_next_censure_tick
     # http://www.tentonhammer.com/wow/guides/stats/haste-hots-dots
     # http://elitistjerks.com/f80/t112939-affliction_cataclysm_%7C_dots_you_4_0_6_updated/#Haste
     # new tick = base tick / (1 + haste %)
-    next_tick = 3 / (1 + calculated_haste(:magic) / 100) # in seconds
-    event = Event.new(self, "censure_dot_damage", current_time + next_tick * 1000)
+    event = Event.new(self, "censure_dot_damage", hasted_cast(3))
   end
 
   # returns haste in % for either melee or spells
@@ -236,10 +255,10 @@ class Player
 
   # Spell power from tooltip at this exact moment in time
   def calculated_spell_power
-    sp = @intellect - 10
+    sp = calculated_intellect - 10
     sp += calculated_attack_power * 0.3 
     sp *= 1.1 if @buff_spell_power_major
-    return sp
+    return sp.round
   end
 
   def swing_off_cooldown(time)
@@ -279,8 +298,43 @@ class Player
       when :dodge then dmg = 0
     end
     
-    Statistics.instance.log_damage_event(:seals_of_command, attack, dmg.round)
+    @mob.deal_damage(:seals_of_command, attack, dmg.round)
 
+  end
+
+
+  def cast_inquisition
+    raise "No Holy Power" if @holy_power == 0 and !@divine_purpose_proc
+
+    if @divine_purpose_proc
+      @divine_purpose_proc.kill
+      @divine_purpose_proc = nil
+      duration = 12
+    else
+      # Determine duration of Holy Power in seconds.
+      duration = 4 * @holy_power
+      duration *= 1 + 0.5 * @talent_inquiry_of_faith if @talent_inquiry_of_faith
+      @holy_power = 0
+    end
+
+    @inquisition.kill if @inquisition
+
+    @inquisition = Event.new(self, "clear_inquisition", duration)
+
+    # TODO confirm inquisition uses spell GCD
+    @is_gcd_locked = true
+    Event.new(self, "clear_gcd", hasted_cast)
+
+    divine_purpose_roll
+  end
+
+  def inquisition_remaining
+    return 0 unless @inquisition
+    return (@inquisition.time - Runner.current_time) / 1000
+  end
+
+  def clear_inquisition
+    @inquisition = nil
   end
 
   def seal_of_truth_dmg(weapon_dmg)
@@ -306,7 +360,7 @@ class Player
       attack = :crit
     end
 
-    Statistics.instance.log_damage_event(:seal_of_truth, :hit, dmg.round)
+    @mob.deal_damage(:seal_of_truth, :hit, dmg.round)
   end
 
   def melee_miss_chance
@@ -388,8 +442,33 @@ class Player
     return @agility
   end
 
+  # GCD lockout if you cast a spell right now
+  def hasted_cast(cast_time = 1.5)
+    return cast_time / (1 + calculated_haste(:magic) / 100)
+  end
 
-  def output_stats()
+  
+  def divine_purpose_roll
+    return unless @talent_divine_purpose and @talent_divine_purpose > 0
+    chance = @talent_divine_purpose == 1 ? 0.07 : 0.15 
+
+    if random < chance
+      @divine_purpose_proc.kill if @divine_purpose_proc
+
+      @divine_purpose_proc = Event.new(self, "clear_divine_purpose", 8) # TODO confirm this is 8 seconds
+    end
+  end
+
+  def clear_divine_purpose
+    @divine_purpose_proc.kill
+    @divine_purpose_proc = nil
+  end
+
+  def has_holy_power(count=1)
+    return (@holy_power >= count or @divine_purpose_proc)
+  end
+
+  def output_stats
     left_spacing = 25
     puts "Agility".ljust(left_spacing) + @agility.to_s
     puts "Melee Crit Chance".ljust(left_spacing) + melee_crit_chance.to_s

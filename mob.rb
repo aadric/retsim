@@ -1,5 +1,5 @@
 class Mob
-  attr_accessor :level, :type, :armor
+  attr_accessor :level, :type, :armor, :health
 
   # Debuffs
   attr_accessor :debuff_armor,            # -12% armor, Faerie Fire, Sunder Armor, etc
@@ -12,6 +12,7 @@ class Mob
 
   def initialize()
     @censure_stacks = 0
+    @damage_dealt = 0
   end
 
 
@@ -20,6 +21,20 @@ class Mob
     armor *= (1-0.12) if @minus_twelve_percent_armor
     
     reduction = armor / (armor + 2167.5 * player_level - 158167.5)  
+  end
+
+  def deal_damage(ability, type, dmg)
+    @damage_dealt += dmg.round
+    Statistics.instance.log_damage(ability, type, dmg.round)
+  end
+
+  def remaining_damage
+    return [0, @health - @damage_dealt].max
+  end
+
+  # At or less than 20% health
+  def flavor_country?
+    return (@health - @damage_dealt)/@health <= 0.20
   end
   
 end

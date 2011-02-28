@@ -4,6 +4,7 @@ require_relative "lib/algorithms"
 require_relative "event"
 require_relative "mob"
 require_relative "statistics"
+require_relative "runner"
 
 Dir["abilities/*.rb"].each {|file| require_relative file}
 
@@ -25,24 +26,11 @@ def random(min=0, max=0)
 end
 
 # in miliseconds
-duration = hours * 60 * 60 * 1000
 
 # when to show * on progress bar
-tick = duration / 80
+tick = Runner.instance.duration / 80
 
-current_time = 0
 
-def priority(current_time, player, mob)
-  if player.crusader_strike.cooldown_remaining(current_time) == 0
-    player.crusader_strike.use(current_time)
-    return
-  end
-
-  if player.exorcism.art_of_war_proc
-    player.exorcism.use(current_time)
-    return
-  end
-end
 
 def convert_value(value)
   return true if value =~ /^true$/i
@@ -77,7 +65,6 @@ def config_parser(filename, player, mob)
   end
 end
 
-queue = PriorityQueue.instance
 
 mob = Mob.new
 mob.level = 88
@@ -89,27 +76,49 @@ config_parser("config.txt", player, mob)
 
 
 
-player.swing(current_time)
-while current_time < duration
-  unless queue.empty?
-    event = queue.pop
-    
-    current_time = event.time
-    
-    if current_time > tick
-      print "*"
-      tick += duration / 80
-    end
-
-    event.execute
+player.swing
+Runner.instance.run(player) do 
+  # Always refresh holy power if not up
+  if player.has_holy_power and !player.inquisition
+    player.cast_inquisition
+    next
   end
 
-  unless player.is_gcd_locked
-    priority(current_time, player, mob)
+  # Cast at 6 seconds or less of inquisition if we have full holy power
+  if player.holy_power == 3 and player.inquisition_remaining <= 6
+    player.cast_inquisition
+    next
+  end
+
+  # Cast TV is we have a proc
+  if player.has_holy_power(3)
+    player.templars_verdict.use
+    next
+  end
+  # Cast TV if we have 3 real HP
+#  if player.holy_power == 3
+#    player.templars_verdict.use(current_time) 
+#    return
+#  end
+
+  # Cast Crusader Strike if we dont have 3 HP
+  if player.crusader_strike.cooldown_remaining == 0
+    player.crusader_strike.use
+    next
+  end
+
+  if player.exorcism.art_of_war_proc
+    player.exorcism.use
+    next
+  end
+
+  unless player.holy_wrath.on_cooldown
+    player.holy_wrath.use
+    next
   end
 end
 
 puts ""
 player.output_stats
 puts ""
-Statistics.instance.output_table(duration)
+Statistics.instance.output_table(Runner.instance.duration)

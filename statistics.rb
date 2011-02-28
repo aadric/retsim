@@ -29,7 +29,7 @@ class Statistics
     end
   end
   
-  def log_damage_event(spell, type, damage=0)
+  def log_damage(spell, type, damage=0)
     @hash[spell][type][:count] += 1
     @hash[spell][type][:min] = damage if damage < @hash[spell][type][:min] || @hash[spell][type][:min]==0
     @hash[spell][type][:max] = damage if damage > @hash[spell][type][:max]
@@ -37,22 +37,35 @@ class Statistics
   end
   
   def output_table(duration)
-#    File.open("log.txt", 'w') do |f|
-    f = STDOUT
-    begin
-      f.puts "Duration " + (duration/1000).to_s + " seconds"
-      f.puts "DPS " + (total_damage/(duration/1000)).to_s
+    File.open("report.html", 'w') do |f|
+      f.puts "Duration " + (duration/1000).to_s + " seconds<br/>"
+      f.puts "DPS " + (total_damage/(duration/1000)).to_s + "<br/>"
       f.puts
       @hash.each do |key, value|
-        f.puts key.to_s.gsub(/_/,' ').gsub(/\b([a-z])/){$1.capitalize}.ljust(15)
-        f.puts "total swings = " + total_count(value).to_s
+        f.puts key.to_s.gsub(/_/,' ').gsub(/\b([a-z])/){$1.capitalize}.ljust(15) + "<br/>"
+        f.puts "<table><tr>"
+        f.puts "<th>&nbsp</th>"
+        f.puts "<th>count</th><th>%</th><th>min</th><th>max</th><th>damage</th><th>average</th></tr>"
+        total_count = 0
+        total_dmg = 0
         value.each do |key2, value2|
-          f.puts "  " + key2.to_s.gsub(/_/,' ').gsub(/\b([a=z])/){$1.capitalize}
-          value2.each do |key3, value3|
-            f.puts "    " + key3.to_s.ljust(10) + " = " + value3.to_s
-          end
-          f.puts "    " + "Average".ljust(10) + " = " + (value2[:damage].to_f / value2[:count]).round.to_s
+          f.puts "<tr>"
+          f.puts "<td>" + key2.to_s.gsub(/_/,' ').gsub(/\b([a=z])/){$1.capitalize} + "</td>"
+          f.puts "<td>" + value2[:count].to_s + "</td>"
+          f.puts "<td>" + '%.3f' % (value2[:count].to_f / total_count(value)) + "</td>"
+          f.puts "<td>" + value2[:min].to_s + "</td>"
+          f.puts "<td>" + value2[:max].to_s + "</td>"
+          f.puts "<td>" + value2[:damage].to_s + "</td>"
+          f.puts "<td>" + (value2[:damage].to_f / value2[:count]).round.to_s + "</td>"
+          f.puts "</tr>"
+          total_count += value2[:count]
+          total_dmg += value2[:damage]
         end
+        if total_count > 0 and total_dmg > 0
+          f.puts "<tr><td>total</td><td>"+total_count.to_s+"</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>"
+          f.puts "<td>" + total_dmg.to_s + "</td><td>" + (total_dmg / total_count).to_s + "</td</tr>"
+        end
+        f.puts "</table>"
       end
     end
   end

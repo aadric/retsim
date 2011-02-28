@@ -5,10 +5,17 @@ class CrusaderStrike
     @mob = mob
     @player = player
     @on_cooldown = false
+
+    @count = 0
+    @dmg = 0
   end
 
-  def use(current_time)
+  def use
     dmg = @player.weapon_damage * 1.35 
+
+#    @count += 1
+#    @dmg += dmg
+#    puts (@dmg / @count) if @count % 100 == 0
 
     dmg *= @player.physical_bonus_multiplier
 
@@ -27,13 +34,13 @@ class CrusaderStrike
       when :dodge then dmg = 0
     end
 
-    Statistics.instance.log_damage_event(:crusader_strike, attack, dmg.round)
+    @mob.deal_damage(:crusader_strike, attack, dmg.round)
 
-    @cooldown_obj = Event.new(self, "off_cooldown", current_time + cooldown_if_cast_now * 1000, :crusader_strike)
+    @cooldown_obj = Event.new(self, "off_cooldown", cooldown_if_cast_now, :crusader_strike)
     @on_cooldown = true
 
     @player.is_gcd_locked = true
-    Event.new(@player, "clear_gcd", current_time + 1.5 * 1000)
+    Event.new(@player, "clear_gcd", 1.5)
 
     @player.holy_power += 1 unless @player.holy_power == 3
   end
@@ -45,14 +52,14 @@ class CrusaderStrike
     return crit_chance
   end
 
-  def off_cooldown(current_time)
+  def off_cooldown
     @on_cooldown = false
     @cooldown_obj = nil
   end
 
-  def cooldown_remaining(current_time)
+  def cooldown_remaining
     return 0 unless @cooldown_obj
-    return (@cooldown_obj.time - current_time) / 1000
+    return (@cooldown_obj.time - Runner.current_time) / 1000
   end
 
 

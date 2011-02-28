@@ -45,12 +45,15 @@ strength_from_food = 0 # integer
 # Glyphs, true/false
 glyph_of_seal_of_truth = true
 glyph_of_exorcism = true
-glyph_of_crusader_strike = true
+glyph_of_crusader_strike = false
+glyph_of_templars_verdict = true
 
 plate_specialization = false   # true / false
 
 # Talents, some are true/false, others are ints
+talent_sanctified_wrath = true    # 0,1,2,3
 talent_communion = true           # true / false
+talent_arbiter_of_the_light = 2   # 0,1,2
 talent_seals_of_the_pure = 2      # 0,1,2
 talent_inquiry_of_faith = 3       # 0,1,2,3
 talent_seals_of_command = true    # true / false
@@ -59,14 +62,19 @@ talent_rule_of_law = 3            # 0,1,2,3
 talent_sanctity_of_battle = true  # true / false
 talent_blazing_light = 2          # 0,1,2
 talent_art_of_war = 3             # 0,1,2,3
+talent_judgements_of_the_pure = 0 # 0,1,2,3
+
+set_bonus_t11_two_piece = false
 #
 
 ++ MOB ++
 level = 88
 type = unknown
 armor = 11977
+health = 3000000
 
 debuff_armor = false
 debuff_physical_damage = false  # 4% physical damage.  Brittle Bones, Blood Frenzy, etc
 debuff_spell_damage = false     # 8% spell damage. Master Poisoner, Curse of Elements, etc
 debuff_spell_crit = false       # 5% spell crit. Critical Mass, Shadow and Flame, etc
+
