@@ -51,7 +51,7 @@ glyph_of_templars_verdict = true
 plate_specialization = false   # true / false
 
 # Talents, some are true/false, others are ints
-talent_sanctified_wrath = true    # 0,1,2,3
+talent_sanctified_wrath = 3       # 0,1,2,3
 talent_communion = true           # true / false
 talent_arbiter_of_the_light = 2   # 0,1,2
 talent_seals_of_the_pure = 2      # 0,1,2
@@ -66,6 +66,8 @@ talent_judgements_of_the_pure = 0 # 0,1,2,3
 
 set_bonus_t11_two_piece = false
 #
+
+crit_meta_gem = false
 
 ++ MOB ++
 level = 88

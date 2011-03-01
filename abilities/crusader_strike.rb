@@ -11,7 +11,7 @@ class CrusaderStrike
   end
 
   def use
-    dmg = @player.weapon_damage * 1.35 
+    dmg = @player.weapon_damage(:normalized => true) * 1.35 
 
 #    @count += 1
 #    @dmg += dmg
@@ -26,7 +26,7 @@ class CrusaderStrike
 
     dmg *= 1.2 if @player.avenging_wrath
 
-    attack = @player.attack_table(:melee_special, crit_chance)
+    attack = @player.special_attack_table(:crit_chance => crit_chance)
 
     case attack
       when :crit then dmg *= @player.crit_multiplier(:physical)
@@ -43,6 +43,11 @@ class CrusaderStrike
     Event.new(@player, "clear_gcd", 1.5)
 
     @player.holy_power += 1 unless @player.holy_power == 3
+  end
+
+  def reset
+    @on_cooldown = false
+    @cooldown_obj = nil
   end
 
   def crit_chance

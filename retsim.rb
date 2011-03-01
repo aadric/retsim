@@ -28,7 +28,7 @@ end
 # in miliseconds
 
 # when to show * on progress bar
-tick = Runner.instance.duration / 80
+tick = Runner.instance.fights / 80
 
 
 
@@ -74,10 +74,7 @@ player = Player.new(mob)
 
 config_parser("config.txt", player, mob)
 
-
-
-player.swing
-Runner.instance.run(player) do 
+Runner.instance.run(player, mob) do 
   # Always refresh holy power if not up
   if player.has_holy_power and !player.inquisition
     player.cast_inquisition
@@ -107,6 +104,11 @@ Runner.instance.run(player) do
     next
   end
 
+  if !player.hammer_of_wrath.on_cooldown and (player.avenging_wrath or mob.flavor_country?)
+    player.hammer_of_wrath.use
+    next
+  end
+
   if player.exorcism.art_of_war_proc
     player.exorcism.use
     next
@@ -121,4 +123,4 @@ end
 puts ""
 player.output_stats
 puts ""
-Statistics.instance.output_table(Runner.instance.duration)
+Statistics.instance.output_table(Runner.instance.current_time)

@@ -7,6 +7,9 @@ class TemplarsVerdict
     @count = 0
   end
 
+  def reset
+  end
+
 
   def use
     raise "No Holy Power for Templar's Verdict" unless @player.has_holy_power
@@ -42,7 +45,7 @@ class TemplarsVerdict
     dmg *= 1.2
 
 
-    attack = @player.attack_table(:melee_special, crit_chance)
+    attack = @player.special_attack_table(:crit_chance => crit_chance)
     case attack
       when :crit then dmg *= @player.crit_multiplier(:physical)
       when :miss then dmg = 0

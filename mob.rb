@@ -15,6 +15,10 @@ class Mob
     @damage_dealt = 0
   end
 
+  def reset
+    @damage_dealt = 0
+    @censure_stacks = 0
+  end
 
   def damage_reduction_from_armor(player_level)
     armor = @armor

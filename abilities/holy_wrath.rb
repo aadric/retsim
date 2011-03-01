@@ -7,6 +7,10 @@ class HolyWrath
     @on_cooldown = false
   end
 
+  def reset
+    @on_cooldown = false
+  end
+
   def use
     raise "Holy Wrath on cooldown" if @on_cooldown
 

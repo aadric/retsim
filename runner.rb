@@ -1,36 +1,45 @@
 class Runner
   include Singleton
-  attr_reader :duration, :current_time
+  attr_reader :duration, :current_time, :fights
 
   # Accepts duration in seconds
   def initialize
     @current_time = 0
     @queue = PriorityQueue.instance
-    @duration = 10 * 60 * 60 * 1000
+    @fights = 200
   end
 
   def self.current_time
     self.instance.current_time
   end
 
-  def run(player)
+  def run(player, mob)
     tick = 0
-    while @current_time < @duration
-      unless @queue.empty?
-        event = @queue.pop
-        
-        @current_time = event.time
-        
-        if @current_time > tick
-          print "*"
-          tick += duration / 80
+    i = 0
+    @fights.times do
+      i += 1
+      player.swing
+      while mob.remaining_damage > 0
+        unless @queue.empty?
+          event = @queue.pop
+          
+          @current_time = event.time
+
+          event.execute
         end
 
-        event.execute
+        unless player.is_gcd_locked
+          yield 
+        end
       end
-
-      unless player.is_gcd_locked
-        yield 
+      # Reset the fight    
+      player.reset
+      mob.reset
+      @queue.clear
+      
+      if i > tick
+        print "*"
+        tick += @fights / 80
       end
     end
   end

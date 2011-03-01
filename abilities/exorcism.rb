@@ -10,6 +10,16 @@ class Exorcism
     @mob = mob
 
     @remaining_dot_ticks = 0
+
+    @total_dmg = 0
+    @count = 0
+  end
+
+  def reset
+    @remaining_dot_ticks = 0
+    @art_of_war_proc = nil
+    @next_dot_event = nil
+    @primary_dmg = nil
   end
 
 
@@ -18,9 +28,10 @@ class Exorcism
     @art_of_war_proc = false
     # TODO clear event that would clear this proc since we just used it
 
-    dmg = random(2592, 2892)
-    #dmg += @player.calculated_attack_power * 0.344
+    dmg = random(2591, 2891)
+
     dmg += @player.calculated_attack_power * 0.344
+
     dmg *= @player.magic_bonus_multiplier
 
     talent_multiplier = 1
@@ -62,7 +73,7 @@ class Exorcism
   def dot_damage
     dmg = @primary_dmg * 0.20 / 3 
     attack = :hit
-    if random < @player.spell_crit_chance or [:undead, :demon].include?(@mob.type) 
+    if random < @player.spell_crit_chance or [:undead, :demon].include?(@mob.type) # TODO confirm the dots can crit
       attack = :crit
       dmg *= @player.crit_multiplier(:magic)
     end

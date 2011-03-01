@@ -41,7 +41,7 @@ class Player
   # talents
   attr_accessor :talent_communion,                # true / false
                 :talent_seals_of_the_pure,        # 0,1,2
-                :talent_santified_wrath,          # 0,1,2,3
+                :talent_sanctified_wrath,          # 0,1,2,3
                 :talent_inquiry_of_faith,         # 0,1,2,3
                 :talent_seals_of_command,         # true / false
                 :talent_crusade,                  # 0,1,2,3
@@ -55,6 +55,8 @@ class Player
   # Set Bonuses
   attr_accessor :set_bonus_t11_two_piece  # true / false
 
+  attr_accessor :crit_meta_gem
+
 
   # TODO profession bonuses
 
@@ -62,7 +64,7 @@ class Player
   attr_accessor :inquisition, :avenging_wrath, :heroism, :divine_purpose_proc
 
   # abilities
-  attr_accessor :crusader_strike, :exorcism, :templars_verdict, :holy_wrath
+  attr_accessor :crusader_strike, :exorcism, :templars_verdict, :holy_wrath, :hammer_of_wrath
 
   def initialize(mob)
     @mob = mob  
@@ -73,6 +75,18 @@ class Player
     @exorcism = Exorcism.new(self, @mob)
     @templars_verdict = TemplarsVerdict.new(self, @mob)
     @holy_wrath = HolyWrath.new(self, @mob)
+    @hammer_of_wrath = HammerOfWrath.new(self, @mob)
+  end
+
+  def reset
+    @holy_power = 0
+    @is_gcd_locked = false
+    @inquisition = @avenging_wrath = @heroism = @divine_purpose_proc = nil
+    @crusader_strike.reset
+    @exorcism.reset
+    @templars_verdict.reset
+    @holy_wrath.reset
+    @hammer_of_wrath.reset
   end
 
   def calculated_attack_power
@@ -126,9 +140,11 @@ class Player
 
 
   # Returns weapon damage at this exact moment
-  def weapon_damage
+  def weapon_damage(options = {})
+    options[:normalized] ||= false
+
     dmg = calculated_attack_power / 14
-    dmg *= @weapon_speed
+    dmg *= options[:normalized] ? 3.3 : @weapon_speed
 
     dmg += random(@weapon_dmg_low_end, @weapon_dmg_high_end)
   end
@@ -137,7 +153,7 @@ class Player
   def swing
     dmg = weapon_damage
     
-    attack = attack_table(:autoattack)
+    attack = autoattack_table
 
     if [:hit, :crit, :glancing].include?(attack)
       # Seal of truth can't miss, be dodged, or glance.
@@ -289,8 +305,7 @@ class Player
     dmg *= 1.2 # two handed specialization
     dmg *= 1.2 if @avenging_wrath
 
-    # Seals of Command can miss and can be dodged, but can't be a glancing blow
-    attack = attack_table(:special)
+    attack = special_attack_table
 
     case attack
       when :crit then dmg *= 2 
@@ -412,29 +427,39 @@ class Player
     multiplier
   end
 
-  def attack_table(type = :autoattack, crit_chance = nil)
+  def autoattack_table
     attack = random
-    
-    crit_chance = melee_crit_chance unless crit_chance
 
-    # Everyone's best guess is glancing blows are 24%, but might be 25% needs
-    # more testing
-    if(type == :autoattack) 
-      if(attack < 0.24) then return :glancing else attack -= 0.24 end
-    end
+    # TODO confirm its 24% and not 25%
+    if(attack < 0.24) then return :glancing else attack -= 0.24 end
     if(attack < melee_miss_chance) then return :miss else attack -= melee_miss_chance end
     if(attack < melee_dodge_chance) then return :dodge else attack -= melee_dodge_chance end
-    if(attack < crit_chance) then return :crit end
+    if(attack < melee_crit_chance) then return :crit end
+    return :hit
+  end
+
+  def special_attack_table(options = {})
+    options[:ranged] ||= false
+    options[:crit_chance] ||= melee_crit_chance
+    
+    attack = random
+
+    if(attack < melee_miss_chance) then return :miss else attack -= melee_miss_chance end
+    unless options[:ranged]
+      if(attack < melee_dodge_chance) then return :dodge else attack -= melee_dodge_chance end
+    end
+
+    # two roll system for specials
+    attack = random
+    if random < options[:crit_chance] then return :crit end
     return :hit
   end
 
   def spell_table(crit_chance = nil)
-    attack = random
-    
     crit_chance = spell_crit_chance unless crit_chance
 
-    if(attack < spell_miss_chance) then return :miss else attack -= spell_miss_chance end
-    if(attack < crit_chance) then return :crit end
+    if(random < spell_miss_chance) then return :miss end
+    if(random < crit_chance) then return :crit end
     return :hit
   end
 
