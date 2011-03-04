@@ -71,10 +71,50 @@ mob.level = 88
 
 player = Player.new(mob)
 
+class Float
+  def prob_round
+    val = self.truncate
+    val +=1 if rand < self - self.truncate
+    val 
+  end
+end
 
+class Fixnum
+  def segment(count)
+    temp = []
+    x = self.divmod(count)
+    count.times do |i|
+      val = x[0]
+      val += 1 if i < x[1]
+      temp << val
+    end
+    temp.reverse
+  end
+end
+
+class CS
+
+  def swing
+    puts "using cs " + @test.to_s
+  end
+  alias_method :use, :swing
+end
+
+module Test
+  def use
+    super
+    puts "test user"
+  end
+end
+
+# TODO add configuration option to break up mastery damage by CS and TV
 config_parser("config.txt", player, mob)
 
 Runner.instance.run(player, mob) do 
+  if player.zealotry.useable?
+    player.zealotry.use
+  end
+
   # Always refresh holy power if not up
   if player.has_holy_power and !player.inquisition
     player.cast_inquisition
@@ -85,6 +125,10 @@ Runner.instance.run(player, mob) do
   if player.holy_power == 3 and player.inquisition_remaining <= 6
     player.cast_inquisition
     next
+  end
+
+  unless player.avenging_wrath.on_cooldown?
+    player.avenging_wrath.use
   end
 
   # Cast TV is we have a proc
@@ -104,13 +148,18 @@ Runner.instance.run(player, mob) do
     next
   end
 
-  if !player.hammer_of_wrath.on_cooldown and (player.avenging_wrath or mob.flavor_country?)
+  if player.hammer_of_wrath.useable?
     player.hammer_of_wrath.use
     next
   end
 
   if player.exorcism.art_of_war_proc
     player.exorcism.use
+    next
+  end
+
+  unless player.judgement.on_cooldown
+    player.judgement.use
     next
   end
 

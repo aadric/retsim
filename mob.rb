@@ -28,7 +28,9 @@ class Mob
   end
 
   def deal_damage(ability, type, dmg)
-    @damage_dealt += dmg.round
+    raise "Invalid attack type" unless [:miss, :dodge, :hit, :crit, :glancing].include?(type)
+    dmg = 0 if [:miss, :dodge].include?(type)
+    @damage_dealt += dmg.round  
     Statistics.instance.log_damage(ability, type, dmg.round)
   end
 

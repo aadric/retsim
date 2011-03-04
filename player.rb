@@ -8,7 +8,8 @@ class Player
 
   # combat ratings and attributes from paper doll
   attr_accessor :hit_rating, :strength, :agility, :attack_power,
-                :haste_rating, :crit_rating, :intellect, :expertise_rating
+                :haste_rating, :crit_rating, :intellect, :expertise_rating,
+                :mastery_rating
 
   # weapon stats exactly as they appear on weapon (NOT paper doll)
   attr_accessor :weapon_speed, :weapon_dmg_low_end, :weapon_dmg_high_end
@@ -33,15 +34,16 @@ class Player
   # glyphs
   attr_accessor :glyph_of_seal_of_truth,
                 :glyph_of_exorcism,
+                :glyph_of_judgement,
                 :glyph_of_templars_verdict,
                 :glyph_of_crusader_strike
 
-  attr_accessor :plate_specialization   # true / false
+  attr_accessor :plate_specialization, :two_handed_specialization   # true / false
 
   # talents
   attr_accessor :talent_communion,                # true / false
                 :talent_seals_of_the_pure,        # 0,1,2
-                :talent_sanctified_wrath,          # 0,1,2,3
+                :talent_sanctified_wrath,         # 0,1,2,3
                 :talent_inquiry_of_faith,         # 0,1,2,3
                 :talent_seals_of_command,         # true / false
                 :talent_crusade,                  # 0,1,2,3
@@ -50,6 +52,7 @@ class Player
                 :talent_blazing_light,            # 0,1,2
                 :talent_judgements_of_the_pure,   # 0,1,2,3
                 :talent_arbiter_of_the_light,     # 0,1,2
+                :talent_divine_purpose,           # 0,1,2
                 :talent_art_of_war                # 0,1,2,3
 
   # Set Bonuses
@@ -61,32 +64,43 @@ class Player
   # TODO profession bonuses
 
   # temporary buffs
-  attr_accessor :inquisition, :avenging_wrath, :heroism, :divine_purpose_proc
+  attr_accessor :inquisition, :avenging_wrath, :heroism
 
   # abilities
-  attr_accessor :crusader_strike, :exorcism, :templars_verdict, :holy_wrath, :hammer_of_wrath
+  attr_accessor :crusader_strike, :exorcism, :templars_verdict, :holy_wrath, :hammer_of_wrath,
+                :judgement, :divine_purpose, :zealotry
 
   def initialize(mob)
     @mob = mob  
     @holy_power = 0
 
     # abilities
+    # TODO automate this
     @crusader_strike = CrusaderStrike.new(self, @mob)
     @exorcism = Exorcism.new(self, @mob)
     @templars_verdict = TemplarsVerdict.new(self, @mob)
     @holy_wrath = HolyWrath.new(self, @mob)
     @hammer_of_wrath = HammerOfWrath.new(self, @mob)
+    @judgement = Judgement.new(self, @mob)
+    # TODO talent check
+    @zealotry = Zealotry.new(self)
+    @avenging_wrath = AvengingWrath.new(self)
+    @divine_purpose = DivinePurpose.new(self) 
   end
 
   def reset
     @holy_power = 0
     @is_gcd_locked = false
-    @inquisition = @avenging_wrath = @heroism = @divine_purpose_proc = nil
+    @inquisition = @heroism = nil
+    # TODO automate this
     @crusader_strike.reset
     @exorcism.reset
     @templars_verdict.reset
     @holy_wrath.reset
     @hammer_of_wrath.reset
+    @judgement.reset
+    @avenging_wrath.reset
+    @zealotry.reset
   end
 
   def calculated_attack_power
@@ -182,7 +196,6 @@ class Player
       when :dodge then dmg = 0
       when :crit then dmg *= 2 # TODO meta gem
       # No one knows how glancing blows work.  Basic testing shows an average of 25% reduction
-      # However its not a static value.
       # This falls in line with limited testing (500 swings)
       when :glancing then dmg = (dmg * random(67,83)/100).round
     end  
@@ -206,7 +219,7 @@ class Player
      
 
     # is aw up?
-    dmg *= 1.2 if @avenging_wrath
+    dmg *= 1.2 if @avenging_wrath.active?
 
 
     dmg = dmg.round
@@ -238,7 +251,7 @@ class Player
     multiplier = 1 + percent_bonus
     dmg *= multiplier
 
-    dmg *= 1.2 if @avenging_wrath
+    dmg *= 1.2 if @avenging_wrath.active?
 
 
     attack = :hit
@@ -298,12 +311,12 @@ class Player
     return multiplier
   end
 
-
+  # TODO validate this.  is it normalized weapon damage?
   def seals_of_command_dmg(weapon_dmg)
     dmg = 0.07 * weapon_dmg
     dmg *= magic_bonus_multiplier(:holy)
     dmg *= 1.2 # two handed specialization
-    dmg *= 1.2 if @avenging_wrath
+    dmg *= 1.2 if @avenging_wrath.active?
 
     attack = special_attack_table
 
@@ -314,16 +327,19 @@ class Player
     end
     
     @mob.deal_damage(:seals_of_command, attack, dmg.round)
-
   end
 
+  def mastery_percent  
+    val = 0.168
+    val += @mastery_rating / 179.28 * 0.021
+  end
 
+  # TODO break into abilities file
   def cast_inquisition
-    raise "No Holy Power" if @holy_power == 0 and !@divine_purpose_proc
+    raise "No Holy Power" if @holy_power == 0 and !@divine_purpose.active
 
-    if @divine_purpose_proc
-      @divine_purpose_proc.kill
-      @divine_purpose_proc = nil
+    if @divine_purpose.active
+      @divine_purpose.kill
       duration = 12
     else
       # Determine duration of Holy Power in seconds.
@@ -339,8 +355,6 @@ class Player
     # TODO confirm inquisition uses spell GCD
     @is_gcd_locked = true
     Event.new(self, "clear_gcd", hasted_cast)
-
-    divine_purpose_roll
   end
 
   def inquisition_remaining
@@ -472,25 +486,8 @@ class Player
     return cast_time / (1 + calculated_haste(:magic) / 100)
   end
 
-  
-  def divine_purpose_roll
-    return unless @talent_divine_purpose and @talent_divine_purpose > 0
-    chance = @talent_divine_purpose == 1 ? 0.07 : 0.15 
-
-    if random < chance
-      @divine_purpose_proc.kill if @divine_purpose_proc
-
-      @divine_purpose_proc = Event.new(self, "clear_divine_purpose", 8) # TODO confirm this is 8 seconds
-    end
-  end
-
-  def clear_divine_purpose
-    @divine_purpose_proc.kill
-    @divine_purpose_proc = nil
-  end
-
   def has_holy_power(count=1)
-    return (@holy_power >= count or @divine_purpose_proc)
+    return (@holy_power >= count or @divine_purpose.active)
   end
 
   def output_stats

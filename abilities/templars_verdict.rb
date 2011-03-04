@@ -14,7 +14,7 @@ class TemplarsVerdict
   def use
     raise "No Holy Power for Templar's Verdict" unless @player.has_holy_power
 
-    if @player.divine_purpose_proc
+    if @player.divine_purpose.active
       modifier = 2.35
     else
       case @player.holy_power
@@ -42,7 +42,9 @@ class TemplarsVerdict
 
     dmg *= modifier
 
-    dmg *= 1.2
+    dmg *= 1.2 if @player.avenging_wrath.active?
+
+    dmg *= 1.2 if @player.two_handed_specialization
 
 
     attack = @player.special_attack_table(:crit_chance => crit_chance)
@@ -53,11 +55,15 @@ class TemplarsVerdict
     end
     @mob.deal_damage(:templars_verdict, attack, dmg.round)
 
+    hand_of_light_dmg = dmg * @player.mastery_percent
+    hand_of_light_dmg * 1.3 if @player.inquisition
+    # TODO avenging wrath?
+    @mob.deal_damage(:hand_of_light, :hit, hand_of_light_dmg)
+
     # We keep our holy power on a dodge or a miss
     unless [:miss, :dodge].include?(attack)
-      if @player.divine_purpose_proc
-        @player.divine_purpose_proc.kill
-        @player.divine_purpose_proc = nil
+      if @player.divine_purpose.active
+        @player.divine_purpose.kill
       else
         @player.holy_power = 0
       end
@@ -65,8 +71,6 @@ class TemplarsVerdict
 
     @player.is_gcd_locked = true
     Event.new(@player, "clear_gcd", 1.5)
-
-    @player.divine_purpose_roll
   end
 
   def crit_chance

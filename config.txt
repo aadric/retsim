@@ -13,11 +13,12 @@ strength  = 506
 agility   = 94
 
 hit_rating        = 0
-attack_power      = 1247
 haste_rating      = 0
 crit_rating       = 137
 expertise_rating  = 0
+mastery_rating = 91
                 
+attack_power      = 1247
 
 # weapon stats exactly as they appear on weapon (NOT paper doll)
 weapon_speed        = 3.6
@@ -44,11 +45,13 @@ strength_from_food = 0 # integer
 
 # Glyphs, true/false
 glyph_of_seal_of_truth = true
+glyph_of_judgement = false
 glyph_of_exorcism = true
 glyph_of_crusader_strike = false
 glyph_of_templars_verdict = true
 
 plate_specialization = false   # true / false
+two_handed_specialization = true # true / false
 
 # Talents, some are true/false, others are ints
 talent_sanctified_wrath = 3       # 0,1,2,3
@@ -63,6 +66,7 @@ talent_sanctity_of_battle = true  # true / false
 talent_blazing_light = 2          # 0,1,2
 talent_art_of_war = 3             # 0,1,2,3
 talent_judgements_of_the_pure = 0 # 0,1,2,3
+talent_divine_purpose = 2         # 0,1,2
 
 set_bonus_t11_two_piece = false
 #

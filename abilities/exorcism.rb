@@ -40,6 +40,8 @@ class Exorcism
 
     dmg *= talent_multiplier
 
+    dmg *= 1.2 if @player.avenging_wrath.active?
+
     @primary_dmg = dmg.round
 
     crit_chance = 1 if @mob.type == :undead or @mob.type == :demon
@@ -62,7 +64,6 @@ class Exorcism
 
     @player.is_gcd_locked = true
     Event.new(@player, "clear_gcd", @player.hasted_cast)
-    @player.divine_purpose_roll
   end
 
   def proc_art_of_war

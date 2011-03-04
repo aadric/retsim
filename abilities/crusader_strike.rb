@@ -24,7 +24,7 @@ class CrusaderStrike
     dmg *= 1 + (@player.talent_crusade * 0.10) if @player.talent_crusade
     dmg *= 1.2
 
-    dmg *= 1.2 if @player.avenging_wrath
+    dmg *= 1.2 if @player.avenging_wrath.active?
 
     attack = @player.special_attack_table(:crit_chance => crit_chance)
 
@@ -36,13 +36,26 @@ class CrusaderStrike
 
     @mob.deal_damage(:crusader_strike, attack, dmg.round)
 
+    hand_of_light_dmg = dmg * @player.mastery_percent
+    hand_of_light_dmg * 1.3 if @player.inquisition
+    # TODO avenging wrath?
+    # can it crit?
+    @mob.deal_damage(:hand_of_light, :hit, hand_of_light_dmg)
+
+
+
     @cooldown_obj = Event.new(self, "off_cooldown", cooldown_if_cast_now, :crusader_strike)
     @on_cooldown = true
 
     @player.is_gcd_locked = true
     Event.new(@player, "clear_gcd", 1.5)
 
-    @player.holy_power += 1 unless @player.holy_power == 3
+    increase_holy_power
+  end
+
+  # This method gets monkey patched if Zealotry is loaded
+  def increase_holy_power
+    @player.holy_power +=1 unless @player.holy_power == 3
   end
 
   def reset

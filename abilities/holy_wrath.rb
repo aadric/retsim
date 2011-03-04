@@ -19,6 +19,8 @@ class HolyWrath
 
     dmg *= @player.magic_bonus_multiplier
 
+    dmg *= 1.2 if @player.avenging_wrath.active?
+
     attack = @player.spell_table
     case attack
       when :miss then dmg = 0
