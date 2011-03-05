@@ -7,9 +7,9 @@ class AvengingWrath
   def use
     @active = true
 
-    cooldown = 3 * 60
+    cooldown = 3 * 60 # 3 minutes
 
-    cooldown -= 20 * @player.talent_sanctified_wrath if @player.talent_sanctified_wrath
+    cooldown -= 20 * @player.talent_sanctified_wrath if @player.talent_sanctified_wrath # Less 20 seconds per point in talent
 
     @cooldown_reset_event = Event.new(self, "off_cooldown", cooldown)
 

@@ -16,6 +16,7 @@ class Runner
   def run(player, mob)
     tick = 0
     i = 0
+    gcds = 0
     @fights.times do
       i += 1
       player.swing
@@ -29,6 +30,7 @@ class Runner
         end
 
         unless player.is_gcd_locked
+          gcds += 1
           yield 
         end
       end

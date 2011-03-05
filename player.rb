@@ -6,12 +6,12 @@ class Player
   attr_accessor :is_gcd_locked,
                 :holy_power             # 0,1,2,3
 
-  # combat ratings and attributes from paper doll
+  # combat ratings and attributes from paper doll, without any buffs
   attr_accessor :hit_rating, :strength, :agility, :attack_power,
                 :haste_rating, :crit_rating, :intellect, :expertise_rating,
                 :mastery_rating
 
-  # weapon stats exactly as they appear on weapon (NOT paper doll)
+  # weapon stats exactly as they appear on weapon
   attr_accessor :weapon_speed, :weapon_dmg_low_end, :weapon_dmg_high_end
 
   # buffs
@@ -25,7 +25,7 @@ class Player
                 :buff_attack_power,           # 10% attack power, Blessing of Might, Trueshot Aura, etc
                 :buff_strength_and_agility    # Horn of Winter, Strength of Earth Totem, etc
 
-  attr_accessor :seal # :seal_of_truth
+  attr_accessor :seal # Which seal are we using.  :seal_of_truth
 
   # consumables
   attr_accessor :flask_of_titanic_strength,
@@ -58,17 +58,17 @@ class Player
   # Set Bonuses
   attr_accessor :set_bonus_t11_two_piece  # true / false
 
-  attr_accessor :crit_meta_gem
+  attr_accessor :crit_meta_gem # true / false
 
 
   # TODO profession bonuses
 
   # temporary buffs
-  attr_accessor :inquisition, :avenging_wrath, :heroism
+  attr_accessor :inquisition, :heroism
 
   # abilities
   attr_accessor :crusader_strike, :exorcism, :templars_verdict, :holy_wrath, :hammer_of_wrath,
-                :judgement, :divine_purpose, :zealotry
+                :judgement, :divine_purpose, :zealotry, :avenging_wrath
 
   def initialize(mob)
     @mob = mob  
