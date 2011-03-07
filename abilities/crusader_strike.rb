@@ -28,6 +28,8 @@ class CrusaderStrike
 
     attack = @player.special_attack_table(:crit_chance => crit_chance)
 
+    @last_attack = attack # Keep this floating around for procs
+
     case attack
       when :crit then dmg *= @player.crit_multiplier(:physical)
       when :miss then dmg = 0

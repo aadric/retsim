@@ -24,14 +24,15 @@ class Mob
     armor = @armor
     armor *= (1-0.12) if @minus_twelve_percent_armor
     
-    reduction = armor / (armor + 2167.5 * player_level - 158167.5)  
+    reduction = armor / (armor + 2167.5 * player_level - 158167.5)
   end
 
   def deal_damage(ability, type, dmg)
+    dmg = dmg.round # Should probably use probalistic rounding
     raise "Invalid attack type" unless [:miss, :dodge, :hit, :crit, :glancing].include?(type)
     dmg = 0 if [:miss, :dodge].include?(type)
-    @damage_dealt += dmg.round  
-    Statistics.instance.log_damage(ability, type, dmg.round)
+    @damage_dealt += dmg
+    Statistics.instance.log_damage(ability, type, dmg)
   end
 
   def remaining_damage

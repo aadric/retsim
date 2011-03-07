@@ -68,7 +68,8 @@ class Player
 
   # abilities
   attr_accessor :crusader_strike, :exorcism, :templars_verdict, :holy_wrath, :hammer_of_wrath,
-                :judgement, :divine_purpose, :zealotry, :avenging_wrath
+                :judgement, :divine_purpose, :zealotry, :avenging_wrath,
+                :guardian_of_ancient_kings
 
   def initialize(mob)
     @mob = mob  
@@ -86,6 +87,7 @@ class Player
     @zealotry = Zealotry.new(self)
     @avenging_wrath = AvengingWrath.new(self)
     @divine_purpose = DivinePurpose.new(self) 
+    @guardian_of_ancient_kings = GuardianOfAncientKings.new(self, @mob)
   end
 
   def reset
@@ -101,6 +103,7 @@ class Player
     @judgement.reset
     @avenging_wrath.reset
     @zealotry.reset
+    @guardian_of_ancient_kings.reset
   end
 
   def calculated_attack_power
@@ -157,7 +160,8 @@ class Player
   def weapon_damage(options = {})
     options[:normalized] ||= false
 
-    dmg = calculated_attack_power / 14
+    dmg = calculated_attack_power / 14.to_f
+    dmg = (dmg * 10).round / 10.to_f
     dmg *= options[:normalized] ? 3.3 : @weapon_speed
 
     dmg += random(@weapon_dmg_low_end, @weapon_dmg_high_end)
@@ -186,7 +190,7 @@ class Player
         end
       end
 
-      seals_of_command_dmg(dmg) if @talent_seals_of_command
+      seals_of_command_dmg(dmg) if @talent_seals_of_command and @seal
     end
 
 
@@ -197,10 +201,13 @@ class Player
       when :crit then dmg *= 2 # TODO meta gem
       # No one knows how glancing blows work.  Basic testing shows an average of 25% reduction
       # This falls in line with limited testing (500 swings)
-      when :glancing then dmg = (dmg * random(67,83)/100).round
+      when :glancing then dmg = (dmg * random(67,83)/100)
     end  
 
+    # two handed bonus from just being ret
+    dmg *= 1.2
 
+    # TODO
     # calculate physical bonus %
     # from 4% buff
     # does 4% stack with communion multiplicty or additively?
@@ -211,18 +218,12 @@ class Player
     # from communion
     dmg *= 1.02 if @talent_communion
 
-    # two handed bonus from just being ret
-    dmg *= 1.2
+    # is aw up?
+    dmg *= 1.2 if @avenging_wrath.active?
 
     # augment damage by mobs armor
     dmg *= 1 - @mob.damage_reduction_from_armor(@level)
      
-
-    # is aw up?
-    dmg *= 1.2 if @avenging_wrath.active?
-
-
-    dmg = dmg.round
     @mob.deal_damage(:melee, attack, dmg)
     
     swing_speed = @weapon_speed / (1 + calculated_haste(:physical) / 100)
@@ -441,14 +442,17 @@ class Player
     multiplier
   end
 
-  def autoattack_table
+  def autoattack_table(options = {})
+    options[:crit_chance] ||= melee_crit_chance
+    options[:miss_chance] ||= melee_miss_chance
+    options[:dodge_chance] ||= melee_dodge_chance
     attack = random
 
     # TODO confirm its 24% and not 25%
     if(attack < 0.24) then return :glancing else attack -= 0.24 end
-    if(attack < melee_miss_chance) then return :miss else attack -= melee_miss_chance end
-    if(attack < melee_dodge_chance) then return :dodge else attack -= melee_dodge_chance end
-    if(attack < melee_crit_chance) then return :crit end
+    if(attack < options[:miss_chance]) then return :miss else attack -= options[:miss_chance] end
+    if(attack < options[:dodge_chance]) then return :dodge else attack -= options[:dodge_chance] end
+    if(attack < options[:crit_chance]) then return :crit end
     return :hit
   end
 
@@ -469,7 +473,7 @@ class Player
     return :hit
   end
 
-  def spell_table(crit_chance = nil)
+  def spell_table(crit_chance = nil) # TODO change to options
     crit_chance = spell_crit_chance unless crit_chance
 
     if(random < spell_miss_chance) then return :miss end

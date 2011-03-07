@@ -8,6 +8,7 @@ class Ability
   # Called when resetting entire fight. Usually because mob health has run out
   # and we're starting a new fight
   def reset
+    @cooldown_reset_event.kill if @cooldown_reset_event
     @cooldown_reset_event = nil
   end
 

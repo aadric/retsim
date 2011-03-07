@@ -73,8 +73,9 @@ player = Player.new(mob)
 
 class Float
   def prob_round
-    val = self.truncate
-    val +=1 if rand < self - self.truncate
+    orig = (self * 10).round / 10.to_f
+    val = orig.truncate
+    val +=1 if rand < orig - orig.truncate
     val 
   end
 end
@@ -111,6 +112,10 @@ end
 config_parser("config.txt", player, mob)
 
 Runner.instance.run(player, mob) do 
+  if player.guardian_of_ancient_kings.useable?
+    player.guardian_of_ancient_kings.use
+  end
+
   if player.zealotry.useable?
     player.zealotry.use
   end
@@ -128,7 +133,7 @@ Runner.instance.run(player, mob) do
   end
 
   unless player.avenging_wrath.on_cooldown?
-    player.avenging_wrath.use
+    #player.avenging_wrath.use
   end
 
   # Cast TV is we have a proc

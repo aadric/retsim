@@ -9,7 +9,7 @@ race = draenei # draenei
 
 # Stats from paper doll
 intellect = 106
-strength  = 506
+strength  = 165
 agility   = 94
 
 hit_rating        = 0
@@ -18,17 +18,17 @@ crit_rating       = 137
 expertise_rating  = 0
 mastery_rating = 91
                 
-attack_power      = 1247
+attack_power      = 565
 
 # weapon stats exactly as they appear on weapon (NOT paper doll)
-weapon_speed        = 3.6
-weapon_dmg_low_end  = 1795
-weapon_dmg_high_end = 2693
+weapon_speed        = 2.9
+weapon_dmg_low_end  = 2
+weapon_dmg_high_end = 4
 
 # Raid Buffs, all true/false
-buff_stats                = true 
+buff_stats                = false 
 buff_crit                 = false 
-buff_damage               = true 
+buff_damage               = false 
 buff_spell_haste          = false 
 buff_spell_power_major    = false 
 buff_spell_power_minor    = false 
@@ -37,7 +37,7 @@ buff_attack_power         = false
 buff_strength_and_agility = false 
 
 # Seals: seal_of_truth
-seal = seal_of_truth
+# seal = seal_of_truth
 
 # Consumables
 flask_of_titanic_strength = false # true / false
@@ -77,7 +77,7 @@ crit_meta_gem = false
 level = 88
 type = unknown
 armor = 11977
-health = 3000000
+health = 1000000
 
 debuff_armor = false
 debuff_physical_damage = false  # 4% physical damage.  Brittle Bones, Blood Frenzy, etc

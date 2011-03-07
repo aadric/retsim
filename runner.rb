@@ -29,7 +29,7 @@ class Runner
           event.execute
         end
 
-        unless player.is_gcd_locked
+        unless player.is_gcd_locked 
           gcds += 1
           yield 
         end
