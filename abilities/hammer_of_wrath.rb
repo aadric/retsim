@@ -17,8 +17,6 @@ class HammerOfWrath
 
     dmg *= @player.magic_bonus_multiplier
 
-    dmg *= 1.2 if @player.avenging_wrath.active?
-
     # Hammer of Wrath can miss based on melee hit but can't dodge or be parried
     attack = @player.special_attack_table(:ranged => true, :crit_chance => crit_chance)
     case attack

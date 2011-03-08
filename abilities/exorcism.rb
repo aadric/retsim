@@ -1,4 +1,5 @@
 class Exorcism
+# TODO convert ot Ability
 
   attr_accessor :art_of_war_proc
   attr_accessor :remaining_dot_ticks
@@ -13,6 +14,8 @@ class Exorcism
 
     @total_dmg = 0
     @count = 0
+
+    @player.autoattack.extend(ProcOnAutoAttack)
   end
 
   def reset
@@ -39,8 +42,6 @@ class Exorcism
     talent_multiplier += 1 # assume art of war proc
 
     dmg *= talent_multiplier
-
-    dmg *= 1.2 if @player.avenging_wrath.active?
 
     @primary_dmg = dmg.round
 
@@ -81,6 +82,16 @@ class Exorcism
     @mob.deal_damage(:exorcism_dot, attack, dmg.round)
     @remaining_dot_ticks -= 1
     @next_dot_event = Event.new(self, "dot_damage", @player.hasted_cast(2)) if @remaining_dot_ticks > 0
+  end
+
+  module ProcOnAutoAttack
+    def use
+      super
+      if @player.talent_art_of_war and [:hit, :crit, :glancing].include?(@attack)
+        proc_chance = [0.20, 0.07 * @player.talent_art_of_war].min # 0.00, 0.07, 0.14, 0.20
+        @player.exorcism.proc_art_of_war if random < proc_chance
+      end
+    end
   end
 
 end

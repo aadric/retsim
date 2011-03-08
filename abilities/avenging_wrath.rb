@@ -2,6 +2,7 @@ class AvengingWrath
   
   def initialize(player)
     @player = player
+    @player.extend(AugmentMultipliers)
   end
 
   def use
@@ -35,12 +36,26 @@ class AvengingWrath
     @active = false
   end
 
-  def active?
-    @active ? true : false
-  end
-
   def cooldown_remaining
     return 0 unless @cooldown_reset_event
     return (@cooldown_reset_event.time - Runner.current_time) / 1000
+  end
+
+  def is_active?
+    @active ? true : false
+  end
+
+  module AugmentMultipliers
+    def magic_bonus_multiplier(magic_type = :holy)
+      multiplier = super(magic_type)
+      multiplier *= 1.2 if @avenging_wrath.is_active?
+      multiplier
+    end
+
+    def physical_bonus_multiplier
+      multiplier = super
+      multiplier *= 1.2 if @avenging_wrath.is_active?
+      multiplier
+    end
   end
 end

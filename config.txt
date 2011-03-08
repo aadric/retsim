@@ -37,7 +37,7 @@ buff_attack_power         = false
 buff_strength_and_agility = false 
 
 # Seals: seal_of_truth
-# seal = seal_of_truth
+seal = seal_of_truth
 
 # Consumables
 flask_of_titanic_strength = false # true / false

@@ -19,7 +19,7 @@ class Runner
     gcds = 0
     @fights.times do
       i += 1
-      player.swing
+      player.autoattack.use
       while mob.remaining_damage > 0
         unless @queue.empty?
           event = @queue.pop

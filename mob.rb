@@ -7,9 +7,6 @@ class Mob
                 :debuff_spell_damage,     # 8% spell damage. Master Poisoner, Curse of Elements, etc
                 :debuff_spell_crit        # 5% spell crit. Critical Mass, Shadow and Flame, etc
 
-  # Pali Debuffs
-  attr_accessor :censure_stacks
-
   def initialize()
     @censure_stacks = 0
     @damage_dealt = 0

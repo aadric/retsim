@@ -42,10 +42,7 @@ class TemplarsVerdict
 
     dmg *= modifier
 
-    dmg *= 1.2 if @player.avenging_wrath.active?
-
     dmg *= 1.2 if @player.two_handed_specialization
-
 
     attack = @player.special_attack_table(:crit_chance => crit_chance)
     case attack

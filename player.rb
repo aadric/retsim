@@ -67,9 +67,9 @@ class Player
   attr_accessor :inquisition, :heroism
 
   # abilities
-  attr_accessor :crusader_strike, :exorcism, :templars_verdict, :holy_wrath, :hammer_of_wrath,
-                :judgement, :divine_purpose, :zealotry, :avenging_wrath,
-                :guardian_of_ancient_kings
+  attr_reader :crusader_strike, :exorcism, :templars_verdict, :holy_wrath, :hammer_of_wrath,
+              :judgement, :divine_purpose, :zealotry, :avenging_wrath,
+              :guardian_of_ancient_kings, :autoattack, :seal_of_truth
 
   def initialize(mob)
     @mob = mob  
@@ -77,33 +77,30 @@ class Player
 
     # abilities
     # TODO automate this
-    @crusader_strike = CrusaderStrike.new(self, @mob)
-    @exorcism = Exorcism.new(self, @mob)
-    @templars_verdict = TemplarsVerdict.new(self, @mob)
-    @holy_wrath = HolyWrath.new(self, @mob)
-    @hammer_of_wrath = HammerOfWrath.new(self, @mob)
-    @judgement = Judgement.new(self, @mob)
+    @abilities = []
+    @abilities << @autoattack = AutoAttack.new(self,@mob)
+    @abilities << @crusader_strike = CrusaderStrike.new(self, @mob)
+    @abilities << @exorcism = Exorcism.new(self, @mob)
+    @abilities << @templars_verdict = TemplarsVerdict.new(self, @mob)
+    @abilities << @holy_wrath = HolyWrath.new(self, @mob)
+    @abilities << @hammer_of_wrath = HammerOfWrath.new(self, @mob)
+    @abilities << @judgement = Judgement.new(self, @mob)
     # TODO talent check
-    @zealotry = Zealotry.new(self)
-    @avenging_wrath = AvengingWrath.new(self)
-    @divine_purpose = DivinePurpose.new(self) 
-    @guardian_of_ancient_kings = GuardianOfAncientKings.new(self, @mob)
+    @abilities << @zealotry = Zealotry.new(self)
+    @abilities << @avenging_wrath = AvengingWrath.new(self)
+    @abilities << @divine_purpose = DivinePurpose.new(self) 
+    @abilities << @guardian_of_ancient_kings = GuardianOfAncientKings.new(self, @mob)
+    @abilities << @seal_of_truth = SealOfTruth.new(self, @mob)
   end
 
   def reset
     @holy_power = 0
     @is_gcd_locked = false
     @inquisition = @heroism = nil
-    # TODO automate this
-    @crusader_strike.reset
-    @exorcism.reset
-    @templars_verdict.reset
-    @holy_wrath.reset
-    @hammer_of_wrath.reset
-    @judgement.reset
-    @avenging_wrath.reset
-    @zealotry.reset
-    @guardian_of_ancient_kings.reset
+    
+    @abilities.each do |ability|
+      ability.reset
+    end
   end
 
   def calculated_attack_power
@@ -144,17 +141,11 @@ class Player
 
   def clear
     @casting = false
-    @swinging = false
   end
 
   def clear_gcd
     @is_gcd_locked = false
   end
-
-  def clear_swing_timer
-    @swing_on_cooldown = false
-  end
-
 
   # Returns weapon damage at this exact moment
   def weapon_damage(options = {})
@@ -165,111 +156,6 @@ class Player
     dmg *= options[:normalized] ? 3.3 : @weapon_speed
 
     dmg += random(@weapon_dmg_low_end, @weapon_dmg_high_end)
-  end
-
-  # Swing our weapon, doing damage instantly and creating an event when swing timer is up
-  def swing
-    dmg = weapon_damage
-    
-    attack = autoattack_table
-
-    if [:hit, :crit, :glancing].include?(attack)
-      # Seal of truth can't miss, be dodged, or glance.
-      # It crits independently
-      if @seal == :seal_of_truth
-        # Damage is based on number of stacks immediately before hit
-        seal_of_truth_dmg(dmg)
-        if @mob.censure_stacks == 0
-          # Create event to proc censure
-          setup_next_censure_tick
-        end
-        if @mob.censure_stacks < 5
-          # This is cheating as censure actually has a chance to miss 
-          # based on spell hit.
-          @mob.censure_stacks = @mob.censure_stacks + 1
-        end
-      end
-
-      seals_of_command_dmg(dmg) if @talent_seals_of_command and @seal
-    end
-
-
-
-    case attack 
-      when :miss then dmg = 0
-      when :dodge then dmg = 0
-      when :crit then dmg *= 2 # TODO meta gem
-      # No one knows how glancing blows work.  Basic testing shows an average of 25% reduction
-      # This falls in line with limited testing (500 swings)
-      when :glancing then dmg = (dmg * random(67,83)/100)
-    end  
-
-    # two handed bonus from just being ret
-    dmg *= 1.2
-
-    # TODO
-    # calculate physical bonus %
-    # from 4% buff
-    # does 4% stack with communion multiplicty or additively?
-
-    # from 3% damage buff
-    dmg *= 1.03 if @buff_damage
-
-    # from communion
-    dmg *= 1.02 if @talent_communion
-
-    # is aw up?
-    dmg *= 1.2 if @avenging_wrath.active?
-
-    # augment damage by mobs armor
-    dmg *= 1 - @mob.damage_reduction_from_armor(@level)
-     
-    @mob.deal_damage(:melee, attack, dmg)
-    
-    swing_speed = @weapon_speed / (1 + calculated_haste(:physical) / 100)
-    event = Event.new(self, "swing", swing_speed)
-    
-    if @talent_art_of_war and [:hit, :crit, :glancing].include?(attack)
-      proc_chance = [0.20, 0.07 * @talent_art_of_war].min # 0.00, 0.07, 0.14, 0.20
-      @exorcism.proc_art_of_war if random < proc_chance
-    end
-  end
-
-  def censure_dot_damage
-    if(@mob.censure_stacks <= 0 or @mob.censure_stacks > 5)
-      # This shouldn't ever happen
-      raise "Censure Stack Error"
-    end
-
-    dmg = 0.0192 * calculated_attack_power
-    dmg += 0.01 * calculated_spell_power
-    dmg *= @mob.censure_stacks
-
-    dmg *= magic_bonus_multiplier(:holy)
-
-    percent_bonus = @talent_inquiry_of_faith * 0.1 
-    percent_bonus += 0.06 * @talent_seals_of_the_pure if @talent_seals_of_the_pure
-    multiplier = 1 + percent_bonus
-    dmg *= multiplier
-
-    dmg *= 1.2 if @avenging_wrath.active?
-
-
-    attack = :hit
-    if random < melee_crit_chance
-      dmg *= crit_multiplier(:physical)
-      attack = :crit
-    end
-
-    @mob.deal_damage(:censure, attack, dmg.round)
-    setup_next_censure_tick
-  end
-
-  def setup_next_censure_tick
-    # http://www.tentonhammer.com/wow/guides/stats/haste-hots-dots
-    # http://elitistjerks.com/f80/t112939-affliction_cataclysm_%7C_dots_you_4_0_6_updated/#Haste
-    # new tick = base tick / (1 + haste %)
-    event = Event.new(self, "censure_dot_damage", hasted_cast(3))
   end
 
   # returns haste in % for either melee or spells
@@ -312,24 +198,6 @@ class Player
     return multiplier
   end
 
-  # TODO validate this.  is it normalized weapon damage?
-  def seals_of_command_dmg(weapon_dmg)
-    dmg = 0.07 * weapon_dmg
-    dmg *= magic_bonus_multiplier(:holy)
-    dmg *= 1.2 # two handed specialization
-    dmg *= 1.2 if @avenging_wrath.active?
-
-    attack = special_attack_table
-
-    case attack
-      when :crit then dmg *= 2 
-      when :miss then dmg = 0
-      when :dodge then dmg = 0
-    end
-    
-    @mob.deal_damage(:seals_of_command, attack, dmg.round)
-  end
-
   def mastery_percent  
     val = 0.168
     val += @mastery_rating / 179.28 * 0.021
@@ -365,32 +233,6 @@ class Player
 
   def clear_inquisition
     @inquisition = nil
-  end
-
-  def seal_of_truth_dmg(weapon_dmg)
-    return if @mob.censure_stacks == 0 
-
-    # Seal of Truth has a very poor tooltip
-    # Seems to deal 3% weapon damage per stack
-    dmg = (@mob.censure_stacks * 0.03)
-    dmg *= weapon_dmg
-
-    dmg *= magic_bonus_multiplier(:holy)
-
-    dmg *= 1.12 if @talent_seals_of_the_pure
-
-    # two handed specialization
-    dmg *= 1.2 
-
-    attack = :hit
-
-    # Seal of truth can't miss, be dodged, or glance 
-    if random < melee_crit_chance
-      dmg *= crit_multiplier(:physical)
-      attack = :crit
-    end
-
-    @mob.deal_damage(:seal_of_truth, :hit, dmg.round)
   end
 
   def melee_miss_chance
@@ -464,7 +306,7 @@ class Player
 
     if(attack < melee_miss_chance) then return :miss else attack -= melee_miss_chance end
     unless options[:ranged]
-      if(attack < melee_dodge_chance) then return :dodge else attack -= melee_dodge_chance end
+      if(attack < melee_dodge_chance) then return :dodge end
     end
 
     # two roll system for specials
@@ -482,7 +324,11 @@ class Player
   end
 
   def calculated_agility
-    return @agility
+    bonus_agility = 0
+    bonus_agility += 549 if @buff_strength_and_agility
+    bonus_agility *= 1.05 if @buff_stats
+    bonus_agility += @ability * 1.05 if @buff_stats
+    @agility + agility
   end
 
   # GCD lockout if you cast a spell right now

@@ -24,8 +24,6 @@ class CrusaderStrike
     dmg *= 1 + (@player.talent_crusade * 0.10) if @player.talent_crusade
     dmg *= 1.2
 
-    dmg *= 1.2 if @player.avenging_wrath.active?
-
     attack = @player.special_attack_table(:crit_chance => crit_chance)
 
     @last_attack = attack # Keep this floating around for procs

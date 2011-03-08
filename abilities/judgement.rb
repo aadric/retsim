@@ -8,6 +8,7 @@ class Judgement
   end
 
   def use
+    # TODO this is all hardcorded for seal of truth
     raise "Judgement still on cooldown" if @on_cooldown
 
     dmg = @player.calculated_attack_power * 0.1421
@@ -15,19 +16,17 @@ class Judgement
 
     dmg *= @player.magic_bonus_multiplier
 
-    dmg *= 1 + (0.1 * @mob.censure_stacks)
+    dmg *= 1 + (0.1 * @player.seal_of_truth.censure_stacks)
 
     dmg *= 1.1 if @player.glyph_of_judgement
 
     dmg *= 1.2 if @player.two_handed_specialization
 
-    dmg *= 1.2 if @player.avenging_wrath.active? # TODO confirm
-
     attack = @player.special_attack_table(:crit_chance => crit_chance, :ranged => true)
 
     dmg *= @player.crit_multiplier(:physical) if attack == :crit
 
-    @mob.deal_damage(:judgement, attack, dmg.round) # TODO compare name of attack to recount
+    @mob.deal_damage(:judgement, attack, dmg) # TODO compare name of attack to recount
 
     @on_cooldown = true
     Event.new(self, "clear_cooldown", 8)
