@@ -1,15 +1,13 @@
-class DivinePurpose
-  attr_reader :active 
-
+class DivinePurpose < Ability
 
   def initialize(player)
-    @player = player
+    super(player, nil)
 
     # Divine Purpose can Proc off the following attacks
     @player.judgement.extend(DivinePurposeRoll)
     @player.exorcism.extend(DivinePurposeRoll)
     @player.templars_verdict.extend(DivinePurposeRoll)
-    # TODO Inquisition
+    @player.inquisition.extend(DivinePurposeRoll)
     # TODO DS
     @player.holy_wrath.extend(DivinePurposeRoll)
     @hammer_of_wrath.extend(DivinePurposeRoll)
@@ -17,23 +15,12 @@ class DivinePurpose
     @player.extend(DivinePurposeReset)
   end
 
-  def reset
-    @active = false
-  end
-
-  def kill
-    @active = false
-    @event.kill if @event
-  end
-
   def roll
     return unless @player.talent_divine_purpose and @player.talent_divine_purpose > 0
     chance = @player.talent_divine_purpose == 1 ? 0.07 : 0.15 
 
     if random < chance
-      @event.kill if @event
-      @active = true
-      @event = Event.new(self, "kill", 8) # TODO confirm this is 8 seconds
+      buff_expires_in(8) # TODO confirm this is 8 seconds
     end
   end
 

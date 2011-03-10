@@ -1,20 +1,9 @@
-class TemplarsVerdict
-
-  def initialize(player, mob)
-    @player = player
-    @mob = mob
-    @dmg = 0
-    @count = 0
-  end
-
-  def reset
-  end
-
+class TemplarsVerdict < Ability
 
   def use
-    raise "No Holy Power for Templar's Verdict" unless @player.has_holy_power
+    raise "No Holy Power for Templar's Verdict" unless usable?
 
-    if @player.divine_purpose.active
+    if @player.divine_purpose.active?
       modifier = 2.35
     else
       case @player.holy_power
@@ -24,12 +13,7 @@ class TemplarsVerdict
       end
     end
 
-
     dmg = @player.weapon_damage * modifier
-
-    # @dmg += dmg
-    # @count += 1
-    # puts (@dmg / @count).to_s if @count % 100 == 0
 
     dmg *= @player.physical_bonus_multiplier
     dmg *= 1 - @mob.damage_reduction_from_armor(@player.level)
@@ -53,14 +37,14 @@ class TemplarsVerdict
     @mob.deal_damage(:templars_verdict, attack, dmg.round)
 
     hand_of_light_dmg = dmg * @player.mastery_percent
-    hand_of_light_dmg * 1.3 if @player.inquisition
+    hand_of_light_dmg * 1.3 if @player.inquisition.active?
     # TODO avenging wrath?
     @mob.deal_damage(:hand_of_light, :hit, hand_of_light_dmg)
 
     # We keep our holy power on a dodge or a miss
     unless [:miss, :dodge].include?(attack)
-      if @player.divine_purpose.active
-        @player.divine_purpose.kill
+      if @player.divine_purpose.active?
+        @player.divine_purpose.clear_buff
       else
         @player.holy_power = 0
       end
@@ -76,4 +60,7 @@ class TemplarsVerdict
     crit_chance
   end
 
+  def usable?
+    @player.has_holy_power
+  end
 end

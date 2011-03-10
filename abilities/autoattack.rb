@@ -24,8 +24,7 @@ class AutoAttack < Ability
     # I think technically swing speed is augmented instantly by haste.
     # For now modeling as if its based on haste when swinging
     swing_speed = @player.weapon_speed / (1 + @player.calculated_haste(:physical) / 100)
-    @cooldown_reset_event = Event.new(self, "off_cooldown", swing_speed)
-    @on_cooldown = true
+    cooldown_up_in(swing_speed)
   end
 
   def off_cooldown

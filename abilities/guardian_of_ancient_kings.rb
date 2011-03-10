@@ -26,13 +26,13 @@ class GuardianOfAncientKings < Ability
     # Realistically, the pet doesn't hit right away
     @pet_damage_event = Event.new(self, "pet_damage", 0.1)
 
-    @cooldown_reset_event = Event.new(self, "off_cooldown", 5 * 60)
+    cooldown_up_in(5 * 60)
 
-    Event.new(self, "clear_buff", 30)
-
+    buff_expires_in(30)
   end
 
   def clear_buff
+    super
     dmg = random(207,279) * @buff_count
 
     dmg *= @player.magic_bonus_multiplier(:holy)
@@ -42,16 +42,13 @@ class GuardianOfAncientKings < Ability
 
     @mob.deal_damage(:ancient_fury, attack, dmg)
     
-    @active = false
     @buff_count = 0
     @pet_damage_event.kill if @pet_damage_event
     @pet_damage_event = nil
   end
-    
 
   def reset
     super
-    @active = false
     @pet_damage_event.kill if @pet_damage_event
     @pet_damage_event = nil
     @buff_count = 0

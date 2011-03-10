@@ -10,6 +10,7 @@ class SealOfTruth < Ability
   end
 
   def reset
+    super
     @next_censure_tick.kill if @next_censure_tick
     @next_censure_tick = nil
     @censure_stacks = 0

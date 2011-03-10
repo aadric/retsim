@@ -1,5 +1,4 @@
-class Exorcism
-# TODO convert ot Ability
+class Exorcism < Ability
 
   attr_accessor :art_of_war_proc
   attr_accessor :remaining_dot_ticks
@@ -7,20 +6,18 @@ class Exorcism
   attr_accessor :primary_dmg          # How much damage did exorcism hit for, for purposes of calcultating dot damage
 
   def initialize(player, mob)
-    @player = player
-    @mob = mob
+    super
 
     @remaining_dot_ticks = 0
-
-    @total_dmg = 0
-    @count = 0
 
     @player.autoattack.extend(ProcOnAutoAttack)
   end
 
   def reset
+    super
     @remaining_dot_ticks = 0
     @art_of_war_proc = nil
+    @next_dot_event.kill if @next_dot_event
     @next_dot_event = nil
     @primary_dmg = nil
   end
@@ -48,10 +45,8 @@ class Exorcism
     crit_chance = 1 if @mob.type == :undead or @mob.type == :demon
 
     attack = @player.spell_table(crit_chance)
-    case attack
-      when :miss then dmg = 0
-      when :crit then dmg *= @player.crit_multiplier(:magic)
-    end
+
+    dmg *= @player.crit_multiplier(:magic) if attack == :crit
 
     @mob.deal_damage(:exorcism, attack, dmg.round)
     

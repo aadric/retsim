@@ -63,13 +63,10 @@ class Player
 
   # TODO profession bonuses
 
-  # temporary buffs
-  attr_accessor :inquisition, :heroism
-
   # abilities
   attr_reader :crusader_strike, :exorcism, :templars_verdict, :holy_wrath, :hammer_of_wrath,
               :judgement, :divine_purpose, :zealotry, :avenging_wrath,
-              :guardian_of_ancient_kings, :autoattack, :seal_of_truth
+              :guardian_of_ancient_kings, :autoattack, :seal_of_truth, :inquisition, :heroism
 
   def initialize(mob)
     @mob = mob  
@@ -85,18 +82,19 @@ class Player
     @abilities << @holy_wrath = HolyWrath.new(self, @mob)
     @abilities << @hammer_of_wrath = HammerOfWrath.new(self, @mob)
     @abilities << @judgement = Judgement.new(self, @mob)
+    @abilities << @inquisition = Inquisition.new(self, @mob)
     # TODO talent check
     @abilities << @zealotry = Zealotry.new(self)
-    @abilities << @avenging_wrath = AvengingWrath.new(self)
+    @abilities << @avenging_wrath = AvengingWrath.new(self, @mob)
     @abilities << @divine_purpose = DivinePurpose.new(self) 
     @abilities << @guardian_of_ancient_kings = GuardianOfAncientKings.new(self, @mob)
     @abilities << @seal_of_truth = SealOfTruth.new(self, @mob)
+    @abilities << @heroism = Heroism.new(self, @mob)
   end
 
   def reset
     @holy_power = 0
     @is_gcd_locked = false
-    @inquisition = @heroism = nil
     
     @abilities.each do |ability|
       ability.reset
@@ -165,7 +163,6 @@ class Player
     haste += 3 * @talent_judgements_of_the_pure if @talent_judgements_of_the_pure # TODO actually model this instead of cheating
     haste += 5 if @buff_spell_haste and type == :magic
     haste += 10 if @buff_melee_haste and type == :physical
-    haste += 30 if @temporary_buff_heroism
     return haste
   end
 
@@ -186,7 +183,6 @@ class Player
     percent += 0.03 if @buff_damage # TODO find out why this is additive, should be easy to check
     multiplier = 1 + percent
     multiplier *= 1.08 if @mob.debuff_spell_damage
-    multiplier *= 1.3 if @inquisition and magic_type == :holy
     return multiplier
   end 
 
@@ -201,38 +197,6 @@ class Player
   def mastery_percent  
     val = 0.168
     val += @mastery_rating / 179.28 * 0.021
-  end
-
-  # TODO break into abilities file
-  def cast_inquisition
-    raise "No Holy Power" if @holy_power == 0 and !@divine_purpose.active
-
-    if @divine_purpose.active
-      @divine_purpose.kill
-      duration = 12
-    else
-      # Determine duration of Holy Power in seconds.
-      duration = 4 * @holy_power
-      duration *= 1 + 0.5 * @talent_inquiry_of_faith if @talent_inquiry_of_faith
-      @holy_power = 0
-    end
-
-    @inquisition.kill if @inquisition
-
-    @inquisition = Event.new(self, "clear_inquisition", duration)
-
-    # TODO confirm inquisition uses spell GCD
-    @is_gcd_locked = true
-    Event.new(self, "clear_gcd", hasted_cast)
-  end
-
-  def inquisition_remaining
-    return 0 unless @inquisition
-    return (@inquisition.time - Runner.current_time) / 1000
-  end
-
-  def clear_inquisition
-    @inquisition = nil
   end
 
   def melee_miss_chance
@@ -331,13 +295,13 @@ class Player
     @agility + agility
   end
 
-  # GCD lockout if you cast a spell right now
   def hasted_cast(cast_time = 1.5)
     return cast_time / (1 + calculated_haste(:magic) / 100)
   end
 
   def has_holy_power(count=1)
-    return (@holy_power >= count or @divine_purpose.active)
+    raise "Called has_holy_power with bad arguments" unless [1,2,3].include?(count)
+    return (@holy_power >= count or @divine_purpose.active?)
   end
 
   def output_stats

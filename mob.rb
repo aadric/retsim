@@ -38,7 +38,7 @@ class Mob
 
   # At or less than 20% health
   def flavor_country?
-    return (@health - @damage_dealt)/@health <= 0.20
+    return (@health - @damage_dealt)/@health.to_f <= 0.20
   end
   
 end

@@ -1,5 +1,4 @@
-class HolyWrath
-  attr_reader :on_cooldown
+class HolyWrath < Ability
 
   def initialize(player, mob)
     @player = player
@@ -7,12 +6,9 @@ class HolyWrath
     @on_cooldown = false
   end
 
-  def reset
-    @on_cooldown = false
-  end
 
   def use
-    raise "Holy Wrath on cooldown" if @on_cooldown
+    raise "Holy Wrath on cooldown" unless useable?
 
     dmg = 2402 # TODO confirm
     dmg += 0.61 * @player.calculated_spell_power
@@ -20,21 +16,14 @@ class HolyWrath
     dmg *= @player.magic_bonus_multiplier
 
     attack = @player.spell_table
-    case attack
-      when :miss then dmg = 0
-      when :crit then dmg *= @player.crit_multiplier(:magic)
-    end
+    dmg *= @player.crit_multiplier(:magic) if attack == :crit
 
-    @mob.deal_damage(:holy_wrath, attack, dmg.round)
+    @mob.deal_damage(:holy_wrath, attack, dmg)
 
     @player.is_gcd_locked = true
     Event.new(@player, "clear_gcd", @player.hasted_cast)
 
-    @on_cooldown = true
-    Event.new(self, "clear_cooldown", 15)
+    cooldown_up_in(15)
   end
 
-  def clear_cooldown
-    @on_cooldown = false
-  end
 end

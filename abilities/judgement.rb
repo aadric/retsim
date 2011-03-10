@@ -1,15 +1,8 @@
-class Judgement
-  attr_reader :on_cooldown
-
-  def initialize(player, mob)
-    @mob = mob
-    @player = player
-    @on_cooldown = false
-  end
+class Judgement < Ability
 
   def use
     # TODO this is all hardcorded for seal of truth
-    raise "Judgement still on cooldown" if @on_cooldown
+    raise "Judgement still on cooldown" unless usable?
 
     dmg = @player.calculated_attack_power * 0.1421
     dmg += @player.calculated_spell_power * 0.2229
@@ -28,15 +21,10 @@ class Judgement
 
     @mob.deal_damage(:judgement, attack, dmg) # TODO compare name of attack to recount
 
-    @on_cooldown = true
-    Event.new(self, "clear_cooldown", 8)
+    cooldown_up_in(8)
 
     @player.is_gcd_locked = true
-    Event.new(@player, "clear_gcd", 1.5)
-  end
-
-  def clear_cooldown
-    @on_cooldown = false
+    Event.new(@player, "clear_gcd", 1.5) # TODO stop repating this
   end
 
   def crit_chance
@@ -44,8 +32,4 @@ class Judgement
     crit_chance += 0.06 * @player.talent_arbiter_of_the_light if @player.talent_arbiter_of_the_light
   end
 
-  def reset
-    clear_cooldown
-  end
-    
 end

@@ -2,44 +2,29 @@ class Zealotry < Ability
 
   def initialize(player)
     super(player, nil)
-    @active = false
 
     @player.crusader_strike.extend(ZealotryCheck)
   end
 
-  def reset
-    super
-    @active = false
-  end
-
-
   def use
-    raise "Can't use Zealotry yet" unless useable?
+    raise "Can't use Zealotry yet" unless usable?
 
-    @active = true
-    @cooldown_reset_event = Event.new(self, "off_cooldown", 2 * 60)
+    cooldown_up_in(2 * 60)
 
-    Event.new(self, "clear_buff", 20)
+    buff_expires_in(20)
+
     # Zealotry is off the GCD
   end
 
-  def clear_buff
-    @active = false
-  end
-
   def useable?
-    super and (@player.divine_purpose.active or @player.holy_power == 3)
-  end
-
-  def active?
-    @active
+    super and @player.has_holy_power(3)
   end
 
   module ZealotryCheck
     def increase_holy_power
       if @player.zealotry.active?
         # TODO log statistics
-        @player.holy_power = 3 if @player.zealotry.active?
+        @player.holy_power = 3 
       else
         super
       end

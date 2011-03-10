@@ -112,23 +112,27 @@ end
 config_parser("config.txt", player, mob)
 
 Runner.instance.run(player, mob) do 
-  if player.guardian_of_ancient_kings.useable?
+  if player.heroism.usable?
+    player.heroism.use
+  end
+  
+  if player.guardian_of_ancient_kings.usable?
     player.guardian_of_ancient_kings.use
   end
 
-  if player.zealotry.useable?
+  if player.zealotry.usable?
     player.zealotry.use
   end
 
   # Always refresh holy power if not up
-  if player.has_holy_power and !player.inquisition
-    player.cast_inquisition
+  if player.has_holy_power and !player.inquisition.active?
+    player.inquisition.use
     next
   end
 
   # Cast at 6 seconds or less of inquisition if we have full holy power
-  if player.holy_power == 3 and player.inquisition_remaining <= 6
-    player.cast_inquisition
+  if player.holy_power == 3 and player.inquisition.buff_remaining <= 6
+    player.inquisition.use
     next
   end
 
@@ -148,12 +152,12 @@ Runner.instance.run(player, mob) do
 #  end
 
   # Cast Crusader Strike if we dont have 3 HP
-  if player.crusader_strike.cooldown_remaining == 0
+  if player.crusader_strike.usable?
     player.crusader_strike.use
     next
   end
 
-  if player.hammer_of_wrath.useable?
+  if player.hammer_of_wrath.usable?
     player.hammer_of_wrath.use
     next
   end
@@ -163,12 +167,12 @@ Runner.instance.run(player, mob) do
     next
   end
 
-  unless player.judgement.on_cooldown
+  unless player.judgement.usable?
     player.judgement.use
     next
   end
 
-  unless player.holy_wrath.on_cooldown
+  unless player.holy_wrath.usable?
     player.holy_wrath.use
     next
   end
