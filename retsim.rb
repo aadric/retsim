@@ -93,18 +93,11 @@ class Fixnum
   end
 end
 
-class CS
-
-  def swing
-    puts "using cs " + @test.to_s
-  end
-  alias_method :use, :swing
-end
-
-module Test
-  def use
-    super
-    puts "test user"
+class String
+  # From Rails
+  # Turns "right_eye_of_rajh_346" to "RightEyeOfRajh346"
+  def camelize
+    self.to_s.gsub(/\/(.?)/) { "::#{$1.upcase}" }.gsub(/(?:^|_)(.)/) { $1.upcase }
   end
 end
 
@@ -162,18 +155,23 @@ Runner.instance.run(player, mob) do
     next
   end
 
-  if player.exorcism.art_of_war_proc
+  if player.exorcism.art_of_war_proc?
     player.exorcism.use
     next
   end
 
-  unless player.judgement.usable?
+  if player.judgement.usable?
     player.judgement.use
     next
   end
 
-  unless player.holy_wrath.usable?
+  if player.holy_wrath.usable?
     player.holy_wrath.use
+    next
+  end
+
+  if player.consecration.usable?
+    player.consecration.use
     next
   end
 end

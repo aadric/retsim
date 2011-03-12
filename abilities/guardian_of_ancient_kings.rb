@@ -17,6 +17,7 @@ class GuardianOfAncientKings < Ability
     @buff_count = 0
 
     @player.extend(AugmentPlayerStrength)
+    # TODO a lot of stuff procs this
     @player.crusader_strike.extend(ProcAncientPower)
   end
   
@@ -93,7 +94,7 @@ class GuardianOfAncientKings < Ability
   module ProcAncientPower
     def use
       super
-      unless [:miss, :dodge].include?(@last_attack)
+      unless [:miss, :dodge].include?(@attack)
         @player.guardian_of_ancient_kings.proc_ancient_power
       end
     end

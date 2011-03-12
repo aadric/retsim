@@ -32,11 +32,8 @@ class Player
                 :strength_from_food
 
   # glyphs
-  attr_accessor :glyph_of_seal_of_truth,
-                :glyph_of_exorcism,
-                :glyph_of_judgement,
-                :glyph_of_templars_verdict,
-                :glyph_of_crusader_strike
+  attr_accessor :glyph_of_seal_of_truth, :glyph_of_exorcism, :glyph_of_judgement,
+                :glyph_of_templars_verdict,:glyph_of_crusader_strike, :glyph_of_consecration
 
   attr_accessor :plate_specialization, :two_handed_specialization   # true / false
 
@@ -66,7 +63,8 @@ class Player
   # abilities
   attr_reader :crusader_strike, :exorcism, :templars_verdict, :holy_wrath, :hammer_of_wrath,
               :judgement, :divine_purpose, :zealotry, :avenging_wrath,
-              :guardian_of_ancient_kings, :autoattack, :seal_of_truth, :inquisition, :heroism
+              :guardian_of_ancient_kings, :autoattack, :seal_of_truth, :inquisition, :heroism,
+              :consecration
 
   def initialize(mob)
     @mob = mob  
@@ -90,6 +88,12 @@ class Player
     @abilities << @guardian_of_ancient_kings = GuardianOfAncientKings.new(self, @mob)
     @abilities << @seal_of_truth = SealOfTruth.new(self, @mob)
     @abilities << @heroism = Heroism.new(self, @mob)
+    @abilities << @consecration = Consecration.new(self, @mob)
+
+    @trinkets = []
+    require_relative("trinkets/trinket.rb")
+    require_relative("trinkets/right_eye_of_rajh_346.rb")
+    @trinkets << @trinket1 = RightEyeOfRajh346.new(self, @mob)
   end
 
   def reset
@@ -98,6 +102,10 @@ class Player
     
     @abilities.each do |ability|
       ability.reset
+    end
+
+    @trinkets.each do |trinket|
+      trinket.reset
     end
   end
 
@@ -109,7 +117,7 @@ class Player
   end
 
   def calculated_strength
-    @strength + strength_from_buffs_and_consumables
+    strength + strength_from_buffs_and_consumables
   end
 
   def calculated_intellect

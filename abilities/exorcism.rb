@@ -1,6 +1,5 @@
 class Exorcism < Ability
 
-  attr_accessor :art_of_war_proc
   attr_accessor :remaining_dot_ticks
   attr_accessor :next_dot_event
   attr_accessor :primary_dmg          # How much damage did exorcism hit for, for purposes of calcultating dot damage
@@ -22,6 +21,9 @@ class Exorcism < Ability
     @primary_dmg = nil
   end
 
+  def art_of_war_proc?
+    @art_of_war_proc ? true : false
+  end
 
   def use
     # assume we only cast this when a proc is up

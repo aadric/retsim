@@ -28,13 +28,13 @@ class TemplarsVerdict < Ability
 
     dmg *= 1.2 if @player.two_handed_specialization
 
-    attack = @player.special_attack_table(:crit_chance => crit_chance)
-    case attack
+    @attack = @player.special_attack_table(:crit_chance => crit_chance)
+    case @attack
       when :crit then dmg *= @player.crit_multiplier(:physical)
       when :miss then dmg = 0
       when :dodge then dmg = 0
     end
-    @mob.deal_damage(:templars_verdict, attack, dmg.round)
+    @mob.deal_damage(:templars_verdict, @attack, dmg.round)
 
     hand_of_light_dmg = dmg * @player.mastery_percent
     hand_of_light_dmg * 1.3 if @player.inquisition.active?
@@ -42,7 +42,7 @@ class TemplarsVerdict < Ability
     @mob.deal_damage(:hand_of_light, :hit, hand_of_light_dmg)
 
     # We keep our holy power on a dodge or a miss
-    unless [:miss, :dodge].include?(attack)
+    unless [:miss, :dodge].include?(@attack)
       if @player.divine_purpose.active?
         @player.divine_purpose.clear_buff
       else

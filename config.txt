@@ -49,6 +49,7 @@ glyph_of_judgement = false
 glyph_of_exorcism = true
 glyph_of_crusader_strike = false
 glyph_of_templars_verdict = true
+glyph_of_consecration = true
 
 plate_specialization = false   # true / false
 two_handed_specialization = true # true / false

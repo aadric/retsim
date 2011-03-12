@@ -8,7 +8,7 @@ class HolyWrath < Ability
 
 
   def use
-    raise "Holy Wrath on cooldown" unless useable?
+    raise "Holy Wrath on cooldown" unless usable?
 
     dmg = 2402 # TODO confirm
     dmg += 0.61 * @player.calculated_spell_power

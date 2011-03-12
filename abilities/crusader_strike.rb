@@ -11,13 +11,11 @@ class CrusaderStrike < Ability
 
     dmg *= 1.2 if @player.two_handed_specialization
 
-    attack = @player.special_attack_table(:crit_chance => crit_chance)
+    @attack = @player.special_attack_table(:crit_chance => crit_chance)
 
-    @last_attack = attack # Keep this floating around for procs
+    dmg *= @player.crit_multiplier(:physical) if @attack == :crit
 
-    dmg *= @player.crit_multiplier(:physical) if attack == :crit
-
-    @mob.deal_damage(:crusader_strike, attack, dmg)
+    @mob.deal_damage(:crusader_strike, @attack, dmg)
 
     hand_of_light_dmg = dmg * @player.mastery_percent
     hand_of_light_dmg * 1.3 if @player.inquisition.active?
