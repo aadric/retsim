@@ -8,22 +8,22 @@ level = 85
 race = draenei # draenei
 
 # Stats from paper doll
-intellect = 106
-strength  = 165
-agility   = 94
+intellect = 121
+strength  = 4008
+agility   = 109
 
-hit_rating        = 0
-haste_rating      = 0
-crit_rating       = 137
-expertise_rating  = 0
-mastery_rating = 91
+hit_rating        = 841
+haste_rating      = 462
+crit_rating       = 1481
+expertise_rating  = 482
+mastery_rating = 1890
                 
-attack_power      = 565
+attack_power      = 8491
 
 # weapon stats exactly as they appear on weapon (NOT paper doll)
-weapon_speed        = 2.9
-weapon_dmg_low_end  = 2
-weapon_dmg_high_end = 4
+weapon_speed        = 3.6
+weapon_dmg_low_end  = 1795
+weapon_dmg_high_end = 2693
 
 # Raid Buffs, all true/false
 buff_stats                = false 

@@ -6,7 +6,12 @@ class Runner
   def initialize
     @current_time = 0
     @queue = PriorityQueue.instance
+    @queue.clear
     @fights = 200
+  end
+
+  def reset
+    initialize
   end
 
   def self.current_time

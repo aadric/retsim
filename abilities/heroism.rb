@@ -5,7 +5,6 @@ class Heroism < Ability
     @player.extend(HeroismHasteModifier)
   end
 
-
   def use
     raise "Can't user heroism yet" unless usable? 
 
