@@ -21,7 +21,6 @@ class Runner
   def run(player, mob)
     tick = 0
     i = 0
-    gcds = 0
     start_time = 0
     @fights.times do
       start_time = Runner.current_time
@@ -37,7 +36,6 @@ class Runner
         end
 
         unless player.is_gcd_locked 
-          gcds += 1
           yield 
         end
       end
@@ -56,6 +54,7 @@ class Runner
         tick += @fights / 80
       end
     end
+    puts ""
   end
 end
 

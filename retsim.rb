@@ -27,15 +27,6 @@ mob = Mob.new
 
 player = Player.new(mob)
 
-
-class String
-  # From Rails
-  # Turns "right_eye_of_rajh_346" to "RightEyeOfRajh346"
-  def camelize
-    self.to_s.gsub(/\/(.?)/) { "::#{$1.upcase}" }.gsub(/(?:^|_)(.)/) { $1.upcase }
-  end
-end
-
 # TODO add configuration option to break up mastery damage by CS and TV
 ConfigParser.parse("config.txt", player, mob)
 
@@ -112,49 +103,49 @@ def reset_sim(player, mob)
   Runner.instance.reset
 end
 
-run_sim(player, mob)
+#run_sim(player, mob)
 
-temp = Reporting.new(Statistics.instance, Runner.current_time)
-temp.generate_report
+#temp = Reporting.new(Statistics.instance, Runner.current_time)
+#temp.generate_report
 
-exit
+#exit
 
 reset_sim(player, mob)
 run_sim(player, mob)
 baseline_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
 
 reset_sim(player, mob)
-player.bonus_hit = 200
+player.bonus_hit = 400
 run_sim(player, mob)
 hit_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
 
 reset_sim(player, mob)
-player.bonus_exp = 200
+player.bonus_exp = 400
 run_sim(player, mob)
 exp_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
 
 reset_sim(player, mob)
-player.bonus_mastery = 200
+player.bonus_mastery = 400
 run_sim(player, mob)
 mastery_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
 
 reset_sim(player, mob)
-player.bonus_crit = 200
+player.bonus_crit = 400
 run_sim(player, mob)
 crit_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
 
 reset_sim(player, mob)
-player.bonus_haste = 200
+player.bonus_haste = 400
 run_sim(player, mob)
 haste_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
 
 reset_sim(player, mob)
-player.bonus_ap = 200
+player.bonus_ap = 400
 run_sim(player, mob)
 ap_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
 
 reset_sim(player, mob)
-player.bonus_str = 200
+player.bonus_str = 400
 run_sim(player, mob)
 str_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
 

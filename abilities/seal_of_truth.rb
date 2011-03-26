@@ -20,8 +20,6 @@ class SealOfTruth < Ability
     raise "Not using seal of truth" unless @player.seal = :seal_of_truth
     raise "No censure stacks" if @censure_stacks <= 0
 
-    # Seal of Truth has a very poor tooltip
-    # Seems to deal 3% weapon damage per stack
     dmg = (@censure_stacks * 0.03)
     dmg *= weapon_dmg
 

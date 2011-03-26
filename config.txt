@@ -1,5 +1,3 @@
-# Comment
-
 # this line is actually important
 ++ PLAYER ++
 
@@ -82,7 +80,7 @@ trinket = synapse_springs
 level = 88
 type = unknown
 armor = 11977
-health = 6000000
+health = 6500000
 
 debuff_armor = true
 debuff_physical_damage = true  # 4% physical damage.  Brittle Bones, Blood Frenzy, etc
