@@ -15,6 +15,11 @@ class Reporting
   def generate_report
     File.open("report.html", 'w') do |f|
       f.puts IO.read("reporting/header.html")
+      f.puts "<p>"
+      f.puts "Duration " + (@duration/1000/60).round.to_s + " minutes<br/>"
+      f.puts "DPS " + (@stats.total_damage/(@duration/1000)).round.to_s + "<br/>"
+      f.puts "Average Fight Length " + (@stats.fights.inject(&:+).to_f / @stats.fights.size / 60).to_s + "<br/>"
+      f.puts "</p>"
       f.puts output_table
       f.puts "<img id=\"pie_breakdown\" src=\""+generate_pie_graph_link+"\"/>"
       f.puts IO.read("reporting/footer.html")
@@ -25,7 +30,7 @@ class Reporting
   def generate_pie_graph_link
     params = Array.new
 
-    params << "chs=600x300"
+    params << "chs=650x300"
     params << "cht=p"
     params << "chf=bg,s,FFFFFF"
    
@@ -34,7 +39,7 @@ class Reporting
     # create objects for data
     @stats.hash.each do |ability, outcomes_hash|
       data_point = DataPoint.new
-      data_point.name = CGI.escape(ability.to_s.gsub(/_/,' ').gsub(/\b([a-z])/){$1.capitalize})
+      data_point.name = ability.to_s.gsub(/_/,' ').gsub(/\b([a-z])/){$1.capitalize}
       total_damage = 0
       outcomes_hash.each do |outcome, stats_hash| 
         total_damage += stats_hash[:damage]
@@ -68,8 +73,7 @@ class Reporting
   end
 
   def output_table
-    s = "Duration " + (@duration/1000/60).round.to_s + " minutes<br/>"
-    s += "DPS " + (@stats.total_damage/(@duration/1000)).round.to_s + "<br/>"
+    s = ""
     @stats.hash.each do |key, value|
       s += "<table class=\"ability_breakdown\" cellspacing=\"0\"><tr>"
       s += "<th class=\"nobg\">" + key.to_s.gsub(/_/,' ').gsub(/\b([a-z])/){$1.capitalize}.ljust(15) + "</th>"

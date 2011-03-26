@@ -47,7 +47,7 @@ class CrusaderStrike < Ability
   def cooldown
     cooldown = 4.5
     return cooldown unless @player.talent_sanctity_of_battle
-    cooldown /= 1 + @player.calculated_haste(:magic) / 100
+    cooldown /= 1 + @player.calculated_haste(:magic) / 100 # from wowhead comments TODO confirm
     return cooldown
   end
 

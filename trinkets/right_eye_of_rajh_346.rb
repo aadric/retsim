@@ -22,6 +22,10 @@ class RightEyeOfRajh346 < Trinket
     player.extend(AugmentPlayerStrength)
   end
 
+  def use
+    # Do nothing
+  end
+
   def try_to_proc(callee)
     unless on_internal_cooldown? or random > PROC_CHANCE
       @active = true
@@ -40,13 +44,11 @@ class RightEyeOfRajh346 < Trinket
   end
 
   module AugmentPlayerStrength
-    def strength_from_buffs_and_consumables
+    def additive_strength_from_buffs_and_consumables
       return super unless @right_eye_of_rajh_346.active?
       str = 1710
-      str *= 1.05 if @plate_specialization
-      str *= 1.05 if @buff_stats
 
-      return (str + super).round
+      return (1710 + super)
     end
   end
 end

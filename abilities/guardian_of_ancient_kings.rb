@@ -56,6 +56,7 @@ class GuardianOfAncientKings < Ability
   end
 
   def pet_damage
+    # Guess work
     attack = @player.autoattack_table(:crit_chance => 0.05, :miss_chance => 0.08, :dodge_dhance => 0.065)
 
     dmg = random(5500,7000) # Unconfirmed but close approx
@@ -66,8 +67,9 @@ class GuardianOfAncientKings < Ability
     end
 
     # TODO
-    dmg *= 1.03 if @player.buff_damage
+    # dmg *= 1.03 if @player.buff_damage # ???
 
+    # TODO Fix this as its goign to use armor debuffs on mob
     dmg *= 1 - @mob.damage_reduction_from_armor(@player.level) # Unconfirmed
 
     @mob.deal_damage(:guardian_of_ancient_kings, attack, dmg)
@@ -83,10 +85,12 @@ class GuardianOfAncientKings < Ability
   end
 
   module AugmentPlayerStrength
-    def strength_from_buffs_and_consumables
+    def total_strength_from_buffs_and_consumables 
       str = super
       str *= 1 + 0.01 * @guardian_of_ancient_kings.buff_count
+
       str += @strength * 0.01 * @guardian_of_ancient_kings.buff_count
+ 
       str.round
     end
   end

@@ -22,7 +22,9 @@ class Runner
     tick = 0
     i = 0
     gcds = 0
+    start_time = 0
     @fights.times do
+      start_time = Runner.current_time
       i += 1
       player.autoattack.use
       while mob.remaining_damage > 0
@@ -39,6 +41,11 @@ class Runner
           yield 
         end
       end
+
+      # Collect some stats
+      fight_length = (Runner.current_time - start_time) / 1000
+      Statistics.instance.fights << fight_length
+
       # Reset the fight    
       player.reset
       mob.reset

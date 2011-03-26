@@ -2,10 +2,13 @@ require "singleton"
 
 class Statistics
   attr_reader :hash
+  attr_accessor :fights
 
   include Singleton
 
   def initialize
+    @fights = []
+
     @hash = Hash.new do |hash,key|
       hash[key] = Hash.new do |hash2, key2|
         hash2[key2] = Hash.new(0)

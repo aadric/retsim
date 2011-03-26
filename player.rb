@@ -94,9 +94,6 @@ class Player
     @abilities << @consecration = Consecration.new(self, @mob)
 
     @trinkets = []
-    require_relative("trinkets/trinket.rb")
-    require_relative("trinkets/right_eye_of_rajh_346.rb")
-    @trinkets << @trinket1 = RightEyeOfRajh346.new(self, @mob)
 
     @bonus_ap = 0
     @bonus_str = 0
@@ -118,6 +115,12 @@ class Player
     @trinkets.each do |trinket|
       trinket.reset
     end
+
+    clear_trinket_lockout
+  end
+
+  def trinket=(trinket_sym)
+    @trinkets << Kernel.const_get(trinket_sym.to_s.camelize).new(self, @mob) 
   end
 
   def reset_bonuses
@@ -142,21 +145,31 @@ class Player
 
   def calculated_attack_power
     ap = @attack_power + @bonus_ap
-    ap += 2 * strength_from_buffs_and_consumables
+    ap += 2 * total_strength_from_buffs_and_consumables
     ap *= 1.10 if @buff_attack_power
     ap.round
   end
 
   def calculated_strength
-    strength + strength_from_buffs_and_consumables
+    @strength + total_strength_from_buffs_and_consumables
   end
 
   def calculated_intellect
     @intellect + intellect_from_buffs_and_consumables
   end
 
+  def total_strength_from_buffs_and_consumables
+    str = additive_strength_from_buffs_and_consumables
+
+    str *= 1.05 if @plate_specialization
+    str *= 1.05 if @buff_stats
+
+    str += @strength * 0.05 if @buff_stats
+    return str.round
+  end
+
   # returns strength from buffs and consumables
-  def strength_from_buffs_and_consumables
+  def additive_strength_from_buffs_and_consumables
     str = 0
 
     str += @bonus_str
@@ -165,10 +178,7 @@ class Player
     str += 300 if @flask_of_titanic_strength    
     str += @strength_from_food
 
-    str *= 1.05 if @plate_specialization
-    str *= 1.05 if @buff_stats
-    str += @strength * 0.05 if @buff_stats
-    return str.round
+    return str
   end
 
   def intellect_from_buffs_and_consumables
@@ -203,7 +213,7 @@ class Player
     haste = (@haste_rating + @bonus_haste) / 128.05701 
     haste += 3 * @talent_judgements_of_the_pure if @talent_judgements_of_the_pure # TODO actually model this instead of cheating
     haste += 5 if @buff_spell_haste and type == :magic
-    haste += 10 if @buff_melee_haste and type == :physical
+    haste += 10 if @buff_physical_haste and type == :physical
     return haste
   end
 
@@ -213,10 +223,6 @@ class Player
     sp += calculated_attack_power * 0.3 
     sp *= 1.1 if @buff_spell_power_major
     return sp.round
-  end
-
-  def swing_off_cooldown(time)
-    @is_on_swing_cooldown = false
   end
 
   def magic_bonus_multiplier(magic_type = :holy)
@@ -258,6 +264,7 @@ class Player
 
   def melee_crit_chance
     melee_crit_chance = 0.00652
+    melee_crit_chance += 0.05 if @buff_crit
     melee_crit_chance += (@crit_rating + @bonus_crit) / 179.28 / 100
     melee_crit_chance += calculated_agility / 203.08 / 100
     melee_crit_chance -= 0.048
@@ -332,7 +339,7 @@ class Player
     bonus_agility = 0
     bonus_agility += 549 if @buff_strength_and_agility
     bonus_agility *= 1.05 if @buff_stats
-    bonus_agility += @ability * 1.05 if @buff_stats
+    bonus_agility += @agility * 1.05 if @buff_stats
     @agility + agility
   end
 
@@ -354,5 +361,25 @@ class Player
     puts "Calculated Attack Power".ljust(left_spacing) + calculated_attack_power.to_s
     puts "Calculated Strength".ljust(left_spacing) + calculated_strength.to_s
     puts "Armor Reduction".ljust(left_spacing) + @mob.damage_reduction_from_armor(@level).to_s
+  end
+
+  def use_trinkets
+    @trinkets.each do |trinket|
+      trinket.use
+    end
+  end
+
+  def lockout_trinkets(seconds)
+    raise "trinket lockout already in affect" if @trinket_lockout
+    @trinket_lockout = Event.new(self, "clear_trinket_lockout", seconds)
+  end
+
+  def clear_trinket_lockout
+    @trinket_lockout.kill if @trinket_lockout
+    @trinket_lockout = nil
+  end
+
+  def trinkets_locked?
+    return @trinket_lockout ? true : false
   end
 end

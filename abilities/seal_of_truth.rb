@@ -6,7 +6,7 @@ class SealOfTruth < Ability
 
     @censure_stacks = 0
     @player.autoattack.extend(AutoAttackProc)
-    # @next_censure_tick = nil
+    # TODO A lot of stuff procs this not just autoattack
   end
 
   def reset
