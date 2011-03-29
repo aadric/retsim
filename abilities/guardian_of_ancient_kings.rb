@@ -13,7 +13,6 @@ class GuardianOfAncientKings < Ability
   
   def initialize(player, mob)
     super(player, mob)
-    @active = false
     @buff_count = 0
 
     @player.extend(AugmentPlayerStrength)
@@ -22,7 +21,7 @@ class GuardianOfAncientKings < Ability
   end
   
   def use
-    @active = true
+    @buff_count = 0
 
     # Realistically, the pet doesn't hit right away
     @pet_damage_event = Event.new(self, "pet_damage", 0.1)
@@ -80,16 +79,16 @@ class GuardianOfAncientKings < Ability
   end
 
   def proc_ancient_power
-    @buff_count += 1 if @active
+    @buff_count += 1 if active?
     @buff_count = 20 if @buff_count > 20
   end
 
   module AugmentPlayerStrength
     def total_strength_from_buffs_and_consumables 
       str = super
-      str *= 1 + 0.01 * @guardian_of_ancient_kings.buff_count
+      str *= 1 + 0.01 * @guardian_of_ancient_kings.buff_count if @guardian_of_ancient_kings.active?
 
-      str += @strength * 0.01 * @guardian_of_ancient_kings.buff_count
+      str += @strength * 0.01 * @guardian_of_ancient_kings.buff_count if @guardian_of_ancient_kings.active?
  
       str.round
     end

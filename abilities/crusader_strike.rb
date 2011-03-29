@@ -17,11 +17,14 @@ class CrusaderStrike < Ability
 
     @mob.deal_damage(:crusader_strike, @attack, dmg)
 
+    # Hand of Light can't crit and is unaffected by anything that affected
+    # the original attack EXCEPT for inquisition.
     hand_of_light_dmg = dmg * @player.mastery_percent
     hand_of_light_dmg * 1.3 if @player.inquisition.active?
+    # It IS affected by 8% debuff on the mob (not double dipping because this doesn't 
+    # http://elitistjerks.com/f76/t110342-retribution_concordance_4_0_6_compliant/p35/#post1899490 
+    hand_of_light_dmg *= 1.08 if @mob.debuff_spell_damage
 
-    # TODO avenging wrath?
-    # can it crit?
     @mob.deal_damage(:hand_of_light, :hit, hand_of_light_dmg)
 
     cooldown_up_in(cooldown)

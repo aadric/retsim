@@ -20,9 +20,6 @@ include Containers
 
 srand Time.now.to_i
 
-# when to show * on progress bar
-tick = Runner.instance.fights / 80
-
 mob = Mob.new
 
 player = Player.new(mob)
@@ -45,7 +42,7 @@ def run_sim(player, mob)
     end
 
     # Cast at 6 seconds or less of inquisition if we have full holy power
-    if player.has_holy_power(3) and player.inquisition.buff_remaining <= 6
+    if player.has_holy_power(3) and player.inquisition.buff_remaining <= 0
       player.inquisition.use
       next
     end
@@ -61,6 +58,12 @@ def run_sim(player, mob)
       next
     end
     
+    # Cast at 6 seconds or less of inquisition if we have full holy power
+    if player.has_holy_power(3) and player.inquisition.buff_remaining < 6
+      player.inquisition.use
+      next
+    end
+
     # Cast TV if we can
     if player.has_holy_power(3)
       player.use_trinkets
@@ -110,52 +113,58 @@ end
 
 #exit
 
+print "Calculating Base DPS... ".ljust(30)
 reset_sim(player, mob)
 run_sim(player, mob)
 baseline_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
+puts baseline_dps.round.to_s
 
 reset_sim(player, mob)
-player.bonus_hit = 400
-run_sim(player, mob)
-hit_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
-
-reset_sim(player, mob)
-player.bonus_exp = 400
-run_sim(player, mob)
-exp_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
-
-reset_sim(player, mob)
-player.bonus_mastery = 400
-run_sim(player, mob)
-mastery_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
-
-reset_sim(player, mob)
-player.bonus_crit = 400
-run_sim(player, mob)
-crit_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
-
-reset_sim(player, mob)
-player.bonus_haste = 400
-run_sim(player, mob)
-haste_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
-
-reset_sim(player, mob)
-player.bonus_ap = 400
+print "Calculating AP DPS... ".ljust(30)
+player.bonus_ap = 100
 run_sim(player, mob)
 ap_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
+puts ap_dps.round.to_s
 
 reset_sim(player, mob)
-player.bonus_str = 400
+print "Calculating Str DPS... ".ljust(30)
+player.bonus_str = 100
 run_sim(player, mob)
 str_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
+puts str_dps.round.to_s
 
-puts ""
-puts "baseline " + baseline_dps.to_s
-puts "ap " + ap_dps.to_s
-puts "Str " + str_dps.to_s
-puts "hit " + hit_dps.to_s
-puts "exp " + exp_dps.to_s
-puts "mastery " + mastery_dps.to_s
-puts "crit " + crit_dps.to_s
-puts "haste " + haste_dps.to_s
+#reset_sim(player, mob)
+#print "Caulcating Hit DPS... ".ljust(30)
+#player.bonus_hit = 100
+#run_sim(player, mob)
+#hit_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
+#puts hit_dps.round.to_s
+#
+#reset_sim(player, mob)
+#print "Calculating Exp DPS... ".ljust(30)
+#player.bonus_exp = 100
+#run_sim(player, mob)
+#exp_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
+#puts exp_dps.round.to_s
+
+reset_sim(player, mob)
+print "Calculating Mastery DPS... ".ljust(30)
+player.bonus_mastery = 100
+run_sim(player, mob)
+mastery_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
+puts mastery_dps.round.to_s
+
+reset_sim(player, mob)
+print "Calculating Crit DPS... ".ljust(30)
+player.bonus_crit = 100
+run_sim(player, mob)
+crit_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
+puts crit_dps.round.to_s
+
+reset_sim(player, mob)
+print "Calculating Haste DPS... ".ljust(30)
+player.bonus_haste = 100
+run_sim(player, mob)
+haste_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
+puts haste_dps.round.to_s
 

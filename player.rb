@@ -247,7 +247,7 @@ class Player
   end
 
   def melee_miss_chance
-    # TODO replace with mob base hit _chance
+    # TODO replace with mob base hit_chance
     melee_miss_chance = 0.08
     # TODO replace with constant
     melee_miss_chance -= (@hit_rating + @bonus_hit) / 120.109 / 100
