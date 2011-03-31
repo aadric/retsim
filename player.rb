@@ -84,7 +84,7 @@ class Player
     @abilities << @hammer_of_wrath = HammerOfWrath.new(self, @mob)
     @abilities << @judgement = Judgement.new(self, @mob)
     @abilities << @inquisition = Inquisition.new(self, @mob)
-    # TODO talent check
+
     @abilities << @zealotry = Zealotry.new(self)
     @abilities << @avenging_wrath = AvengingWrath.new(self, @mob)
     @abilities << @divine_purpose = DivinePurpose.new(self) 
@@ -93,8 +93,9 @@ class Player
     @abilities << @heroism = Heroism.new(self, @mob)
     @abilities << @consecration = Consecration.new(self, @mob)
 
-    @trinkets = []
+    @procs = []
 
+    # TODO convert to hash
     @bonus_ap = 0
     @bonus_str = 0
     @bonus_crit = 0
@@ -112,16 +113,19 @@ class Player
       ability.reset
     end
 
-    @trinkets.each do |trinket|
-      trinket.reset
+    @procs.each do |proc|
+      proc.reset
     end
 
     clear_trinket_lockout
   end
 
-  def trinket=(trinket_sym)
-    @trinkets << Kernel.const_get(trinket_sym.to_s.camelize).new(self, @mob) 
+  def proc=(proc_sym)
+    @procs << Kernel.const_get(proc_sym.to_s.camelize).new(self, @mob) 
   end
+
+  alias :trinket= :proc=
+  alias :enchant= :proc=
 
   def reset_bonuses
     @bonus_ap = 0
@@ -144,27 +148,27 @@ class Player
   end
 
   def calculated_attack_power
-    ap = @attack_power + @bonus_ap
+    ap = attack_power + bonus_ap
     ap += 2 * total_strength_from_buffs_and_consumables
-    ap *= 1.10 if @buff_attack_power
+    ap *= 1.10 if buff_attack_power
     ap.round
   end
 
   def calculated_strength
-    @strength + total_strength_from_buffs_and_consumables
+    strength + total_strength_from_buffs_and_consumables
   end
 
   def calculated_intellect
-    @intellect + intellect_from_buffs_and_consumables
+    intellect + intellect_from_buffs_and_consumables
   end
 
   def total_strength_from_buffs_and_consumables
     str = additive_strength_from_buffs_and_consumables
 
-    str *= 1.05 if @plate_specialization
-    str *= 1.05 if @buff_stats
+    str *= 1.05 if plate_specialization
+    str *= 1.05 if buff_stats
 
-    str += @strength * 0.05 if @buff_stats
+    str += strength * 0.05 if buff_stats
     return str.round
   end
 
@@ -172,11 +176,11 @@ class Player
   def additive_strength_from_buffs_and_consumables
     str = 0
 
-    str += @bonus_str
+    str += bonus_str
 
-    str += 549 if @buff_strength_and_agility
-    str += 300 if @flask_of_titanic_strength    
-    str += @strength_from_food
+    str += 549 if buff_strength_and_agility
+    str += 300 if flask_of_titanic_strength    
+    str += strength_from_food
 
     return str
   end
@@ -184,7 +188,7 @@ class Player
   def intellect_from_buffs_and_consumables
     int = 0
     
-    int += @intellect * 0.05 if @buff_stats
+    int += intellect * 0.05 if buff_stats
     return int.round
   end
 
@@ -196,24 +200,31 @@ class Player
     @is_gcd_locked = false
   end
 
+  def lock_gcd(params = {})
+    params[:hasted] ||= false
+    @is_gcd_locked = true
+    duration = params[:hasted] ? hasted_cast : GLOBAL_COOLDOWN
+    Event.new(self, "clear_gcd", duration)
+  end
+
   # Returns weapon damage at this exact moment
   def weapon_damage(options = {})
     options[:normalized] ||= false
 
     dmg = calculated_attack_power / 14.to_f
     dmg = (dmg * 10).round / 10.to_f
-    dmg *= options[:normalized] ? 3.3 : @weapon_speed
+    dmg *= options[:normalized] ? 3.3 : weapon_speed
 
-    dmg += random(@weapon_dmg_low_end, @weapon_dmg_high_end)
+    dmg += random(weapon_dmg_low_end, weapon_dmg_high_end)
   end
 
   # returns haste in % for either melee or spells
   def calculated_haste(type = :physical)
     raise "Wrong parameters for calculated_haste" unless [:physical, :magic].include?(type) # in case I accidently try to pass :melee or :spell
-    haste = (@haste_rating + @bonus_haste) / 128.05701 
-    haste += 3 * @talent_judgements_of_the_pure if @talent_judgements_of_the_pure # TODO actually model this instead of cheating
-    haste += 5 if @buff_spell_haste and type == :magic
-    haste += 10 if @buff_physical_haste and type == :physical
+    haste = (haste_rating + bonus_haste) / 128.05701 
+    haste += 3 * talent_judgements_of_the_pure if talent_judgements_of_the_pure # TODO actually model this instead of cheating
+    haste += 5 if buff_spell_haste and type == :magic
+    haste += 10 if buff_physical_haste and type == :physical
     return haste
   end
 
@@ -221,51 +232,51 @@ class Player
   def calculated_spell_power
     sp = calculated_intellect - 10
     sp += calculated_attack_power * 0.3 
-    sp *= 1.1 if @buff_spell_power_major
+    sp *= 1.1 if buff_spell_power_major
     return sp.round
   end
 
   def magic_bonus_multiplier(magic_type = :holy)
-    percent = @talent_communion ? 0.02 : 0
-    percent += 0.03 if @buff_damage # TODO find out why this is additive, should be easy to check
+    percent = talent_communion ? 0.02 : 0
+    percent += 0.03 if buff_damage # TODO find out why this is additive, should be easy to check
     multiplier = 1 + percent
     multiplier *= 1.08 if @mob.debuff_spell_damage
     return multiplier
   end 
 
   def physical_bonus_multiplier
-    percent = @talent_communion ? 0.02 : 0
+    percent = talent_communion ? 0.02 : 0
     percent += 0.04 if @mob.debuff_physical_damage
     multiplier = 1 + percent
-    multiplier *= 1.03 if @buff_damage # TODO why is this multiplicative here and additve in magic?
+    multiplier *= 1.03 if buff_damage # TODO why is this multiplicative here and additve in magic?
     return multiplier
   end
 
   def mastery_percent  
     val = 0.168
-    val += (@mastery_rating + @bonus_mastery) / 179.28 * 0.021
+    val += (mastery_rating + bonus_mastery) / 179.28 * 0.021
   end
 
   def melee_miss_chance
     # TODO replace with mob base hit_chance
     melee_miss_chance = 0.08
     # TODO replace with constant
-    melee_miss_chance -= (@hit_rating + @bonus_hit) / 120.109 / 100
-    melee_miss_chance -= 0.01 if @race == :draenei
+    melee_miss_chance -= (hit_rating + bonus_hit) / 120.109 / 100
+    melee_miss_chance -= 0.01 if race == :draenei
     return [melee_miss_chance, 0].max
   end
 
   def melee_dodge_chance
     melee_dodge_chance = 0.065
-    melee_dodge_chance -= 0.025 if @seal == :seal_of_truth and @glyph_of_seal_of_truth
-    melee_dodge_chance -= (@expertise_rating + @bonus_exp) / 120.109 / 100
+    melee_dodge_chance -= 0.025 if seal == :seal_of_truth and glyph_of_seal_of_truth
+    melee_dodge_chance -= (expertise_rating + bonus_exp) / 120.109 / 100
     return [melee_dodge_chance,0].max
   end
 
   def melee_crit_chance
     melee_crit_chance = 0.00652
-    melee_crit_chance += 0.05 if @buff_crit
-    melee_crit_chance += (@crit_rating + @bonus_crit) / 179.28 / 100
+    melee_crit_chance += 0.05 if buff_crit
+    melee_crit_chance += (crit_rating + bonus_crit) / 179.28 / 100
     melee_crit_chance += calculated_agility / 203.08 / 100
     melee_crit_chance -= 0.048
   end
@@ -274,16 +285,16 @@ class Player
   # chance at very low levels of crit.
   def spell_crit_chance
     spell_crit_chance = 0.033355
-    spell_crit_chance += 0.05 if @buff_crit
+    spell_crit_chance += 0.05 if buff_crit
     spell_crit_chance += 0.05 if @mob.debuff_spell_crit
-    spell_crit_chance += (@crit_rating + @bonus_crit)  / 179.28 / 100
+    spell_crit_chance += (crit_rating + bonus_crit)  / 179.28 / 100
     spell_crit_chance -= 0.021
   end
 
   def spell_miss_chance
     miss_chance = 0.17
-    miss_chance -= (@hit_rating + @bonus_hit) / 102.446 / 100
-    miss_chance -= 0.01 if @race == :draenei
+    miss_chance -= (hit_rating + bonus_hit) / 102.446 / 100
+    miss_chance -= 0.01 if race == :draenei
     miss_chance -= 0.08 
   end
 
@@ -292,7 +303,7 @@ class Player
     raise "Wrong parameters for crit_multiplier" unless [:physical, :magic].include?(type) # in case I accidently try to pass :melee
 
     multiplier = type == :physical ? 2 : 1.5
-    multiplier *= 1.03 if @crit_meta_gem
+    multiplier *= 1.03 if crit_meta_gem
     multiplier
   end
 
@@ -337,10 +348,10 @@ class Player
 
   def calculated_agility
     bonus_agility = 0
-    bonus_agility += 549 if @buff_strength_and_agility
-    bonus_agility *= 1.05 if @buff_stats
-    bonus_agility += @agility * 1.05 if @buff_stats
-    @agility + agility
+    bonus_agility += 549 if buff_strength_and_agility
+    bonus_agility *= 1.05 if buff_stats
+    bonus_agility += agility * 1.05 if buff_stats
+    agility + bonus_agility
   end
 
   def hasted_cast(cast_time = 1.5)
@@ -349,12 +360,12 @@ class Player
 
   def has_holy_power(count=1)
     raise "Called has_holy_power with bad arguments" unless [1,2,3].include?(count)
-    return (@holy_power >= count or @divine_purpose.active?)
+    return (holy_power >= count or divine_purpose.active?)
   end
 
   def output_stats
     left_spacing = 25
-    puts "Agility".ljust(left_spacing) + @agility.to_s
+    puts "Agility".ljust(left_spacing) + agility.to_s
     puts "Melee Crit Chance".ljust(left_spacing) + melee_crit_chance.to_s
     puts "Melee Miss Chance".ljust(left_spacing) + melee_miss_chance.to_s
     puts "Melee Dodge Chance".ljust(left_spacing) + melee_dodge_chance.to_s
@@ -364,7 +375,7 @@ class Player
   end
 
   def use_trinkets
-    @trinkets.each do |trinket|
+    @procs.each do |trinket|
       trinket.use
     end
   end

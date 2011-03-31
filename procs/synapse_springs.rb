@@ -1,5 +1,5 @@
 # Not exactly a trinket
-class SynapseSprings < Trinket
+class SynapseSprings < SpecProc
   include OnUseCooldown
   include Buff
 

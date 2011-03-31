@@ -1,4 +1,5 @@
 class Ability
+  # TODO modularize this like trinkets
 
   def initialize(player, mob)
     @player = player

@@ -8,18 +8,16 @@ class Mob
                 :debuff_spell_crit        # 5% spell crit. Critical Mass, Shadow and Flame, etc
 
   def initialize()
-    @censure_stacks = 0
     @damage_dealt = 0
   end
 
   def reset
     @damage_dealt = 0
-    @censure_stacks = 0
   end
 
   def damage_reduction_from_armor(player_level)
     armor = @armor
-    armor *= (1-0.12) if @minus_twelve_percent_armor
+    armor *= (1-0.12) if debuff_armor
     
     reduction = armor / (armor + 2167.5 * player_level - 158167.5)
   end

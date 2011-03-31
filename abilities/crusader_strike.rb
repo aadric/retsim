@@ -17,20 +17,23 @@ class CrusaderStrike < Ability
 
     @mob.deal_damage(:crusader_strike, @attack, dmg)
 
-    # Hand of Light can't crit and is unaffected by anything that affected
-    # the original attack EXCEPT for inquisition.
-    hand_of_light_dmg = dmg * @player.mastery_percent
-    hand_of_light_dmg * 1.3 if @player.inquisition.active?
-    # It IS affected by 8% debuff on the mob (not double dipping because this doesn't 
-    # http://elitistjerks.com/f76/t110342-retribution_concordance_4_0_6_compliant/p35/#post1899490 
-    hand_of_light_dmg *= 1.08 if @mob.debuff_spell_damage
+    unless [:miss, :dodge].include?(@attack)
+      # Hand of Light can't crit and is unaffected by anything that affected
+      # the original attack EXCEPT for inquisition.
+      hand_of_light_dmg = dmg * @player.mastery_percent
+      hand_of_light_dmg *= 1.3 if @player.inquisition.active?
 
-    @mob.deal_damage(:hand_of_light, :hit, hand_of_light_dmg)
+      # It IS affected by 8% debuff on the mob (not double dipping because this doesn't 
+      # http://elitistjerks.com/f76/t110342-retribution_concordance_4_0_6_compliant/p35/#post1899490 
+      hand_of_light_dmg *= 1.08 if @mob.debuff_spell_damage
 
+      @mob.deal_damage(:hand_of_light, :hit, hand_of_light_dmg)
+    end
+
+    # TODO : Do haste procs immediately reduce the cooldown? Should be easy to test with heroism
     cooldown_up_in(cooldown)
 
-    @player.is_gcd_locked = true
-    Event.new(@player, "clear_gcd", 1.5)
+    @player.lock_gcd
 
     increase_holy_power
   end
@@ -50,7 +53,7 @@ class CrusaderStrike < Ability
   def cooldown
     cooldown = 4.5
     return cooldown unless @player.talent_sanctity_of_battle
-    cooldown /= 1 + @player.calculated_haste(:magic) / 100 # from wowhead comments TODO confirm
+    cooldown /= 1 + @player.calculated_haste(:magic) / 100.0 # From Redcape's spreadsheet 5.16
     return cooldown
   end
 

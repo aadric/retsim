@@ -11,7 +11,9 @@ class Runner
     #@confidence_level = 1.644854 # 90%
     @confidence_level = 1.95996 # 95%
     #@confidence_level = 2.32635 # 98%
-    @margin_of_error_allowed = 10 # +/- dps
+    @margin_of_error_allowed = 20 # +/- dps
+
+    # Don't use anything less than 98% and +/- 20 DPS for anything serious
   end
 
   def reset
@@ -41,14 +43,12 @@ class Runner
           @current_time = event.time
 
           event.execute
-        end
+          end
 
         unless player.is_gcd_locked 
           yield 
         end
       end
-
-      avg_dps = Statistics.instance.total_damage / (Runner.current_time / 1000)
 
       this_fights_damage = Statistics.instance.total_damage - last_damage
       this_fights_duration = Runner.current_time - start_time
@@ -58,19 +58,25 @@ class Runner
       last_damage = Statistics.instance.total_damage
       last_time = Runner.current_time
 
-      standard_deviation = dpses.inject(0) do |sum, item|
-        sum += (item - avg_dps) ** 2 
-      end
-      standard_deviation = (standard_deviation / (dpses.size-1)) ** 0.5
-      standard_error = standard_deviation / (dpses.size ** 0.5)
-      margin_of_error = standard_error * @confidence_level
+      if(i % 100 == 0)
+        avg_dps = Statistics.instance.total_damage / (Runner.current_time / 1000)
 
-      if(margin_of_error <= @margin_of_error_allowed and dpses.size >= 100) 
+
+        standard_deviation = dpses.inject(0) do |sum, item|
+          sum += (item - avg_dps) ** 2 
+        end
+
+        standard_deviation = (standard_deviation / (dpses.size-1)) ** 0.5
+        standard_error = standard_deviation / (dpses.size ** 0.5)
+        margin_of_error = standard_error * @confidence_level
+
+        if(margin_of_error <= @margin_of_error_allowed and dpses.size >= 100) 
+          going = false
+        end
+
         #puts "fights = " + i.to_s
         #puts "avg dps " + avg_dps.to_s
         #puts "margin_of_error = " + margin_of_error.to_s
-
-        going = false
       end
 
 

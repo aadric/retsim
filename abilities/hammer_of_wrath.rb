@@ -18,8 +18,7 @@ class HammerOfWrath < Ability
     
     cooldown_up_in(6)
 
-    @player.is_gcd_locked = true
-    Event.new(@player, "clear_gcd", 1.5)
+    @player.lock_gcd
   end
 
 

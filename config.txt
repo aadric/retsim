@@ -11,10 +11,10 @@ strength  = 4008
 agility   = 109
 
 hit_rating        = 841
-haste_rating      = 462
-crit_rating       = 1481
+haste_rating      = 862
+crit_rating       = 1581
 expertise_rating  = 482
-mastery_rating    = 1890
+mastery_rating    = 1590
                 
 attack_power      = 8491
 
@@ -24,21 +24,21 @@ weapon_dmg_low_end  = 1795
 weapon_dmg_high_end = 2693
 
 # Raid Buffs, all true/false
-buff_stats                = true 
-buff_crit                 = true 
-buff_damage               = true 
-buff_spell_haste          = true 
-buff_spell_power_major    = true 
+buff_stats                = false 
+buff_crit                 = false 
+buff_damage               = false 
+buff_spell_haste          = false 
+buff_spell_power_major    = false 
 buff_spell_power_minor    = false 
-buff_physical_haste       = true 
-buff_attack_power         = true 
-buff_strength_and_agility = true 
+buff_physical_haste       = false 
+buff_attack_power         = false 
+buff_strength_and_agility = false 
 
 # Seals: seal_of_truth
 seal = seal_of_truth
 
 # Consumables
-flask_of_titanic_strength = true # true / false
+flask_of_titanic_strength = false # true / false
 strength_from_food = 0 # integer
 
 # Glyphs, true/false
@@ -76,11 +76,13 @@ trinket = fury_of_angerforge_346
 trinket = license_to_slay
 trinket = synapse_springs
 
+enchant = landslide
+
 ++ MOB ++
 level = 88
 type = unknown
 armor = 11977
-health = 6500000
+health = 6000000
 
 debuff_armor = true
 debuff_physical_damage = true  # 4% physical damage.  Brittle Bones, Blood Frenzy, etc

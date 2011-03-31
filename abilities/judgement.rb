@@ -15,16 +15,15 @@ class Judgement < Ability
 
     dmg *= 1.2 if @player.two_handed_specialization
 
-    attack = @player.special_attack_table(:crit_chance => crit_chance, :ranged => true)
+    @attack = @player.special_attack_table(:crit_chance => crit_chance, :ranged => true)
 
-    dmg *= @player.crit_multiplier(:physical) if attack == :crit
+    dmg *= @player.crit_multiplier(:physical) if @attack == :crit
 
-    @mob.deal_damage(:judgement, attack, dmg) # TODO compare name of attack to recount
+    @mob.deal_damage(:judgement, @attack, dmg) # TODO compare name of attack to recount
 
     cooldown_up_in(8)
 
-    @player.is_gcd_locked = true
-    Event.new(@player, "clear_gcd", 1.5) # TODO stop repating this
+    @player.lock_gcd
   end
 
   def crit_chance

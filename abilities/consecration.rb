@@ -16,14 +16,12 @@ class Consecration < Ability
   def use
     raise "Can't use conseration yet" unless usable?
 
-    reset # We don't need to do this because you can't overlap a cast right now
+    reset # This line would be important if you could overwrite consecrate 
 
-    # wowhead is wrong, all tests indicated 27% scaling with AP and SP
+    # Tests indicated 27% scaling with AP and SP
     # http://elitistjerks.com/f76/t110335-paladin_simple_questions_cataclysmic_mode/p4/#post1889388
 
     @dmg = 810
-
-    # TODO confirm this
 
     @dmg += @player.calculated_attack_power * 0.27
     @dmg += @player.calculated_spell_power * 0.27
@@ -35,6 +33,8 @@ class Consecration < Ability
     cooldown_up_in(cooldown) 
 
     @next_tick_event = Event.new(self, "tick", 1) 
+
+    @player.lock_gcd(:hasted => true)
   end
 
   def tick
@@ -55,5 +55,3 @@ class Consecration < Ability
     end
   end
 end
-
-

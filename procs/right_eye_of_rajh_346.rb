@@ -1,4 +1,4 @@
-class RightEyeOfRajh346 < Trinket
+class RightEyeOfRajh346 < SpecProc
   include InternalCooldown
   include Buff
 

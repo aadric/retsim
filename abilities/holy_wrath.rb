@@ -20,8 +20,7 @@ class HolyWrath < Ability
 
     @mob.deal_damage(:holy_wrath, attack, dmg)
 
-    @player.is_gcd_locked = true
-    Event.new(@player, "clear_gcd", @player.hasted_cast)
+    @player.lock_gcd(:hasted => true)
 
     cooldown_up_in(15)
   end

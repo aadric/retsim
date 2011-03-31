@@ -20,10 +20,12 @@ class AutoAttack < Ability
 
     @mob.deal_damage(:melee, @attack, dmg)
    
-    # TODO
-    # I think technically swing speed is augmented instantly by haste.
-    # For now modeling as if its based on haste when swinging
+    # Conventional wisdom and testing of similiar mechanics suggest that swing speed 
+    # is instantly adjusted on haste procs.
+    # However we are modeling using haste at time of last swing for simplicity
+    # This will undervalue trinkets with haste procs.
     swing_speed = @player.weapon_speed / (1 + @player.calculated_haste(:physical) / 100)
+    # TODO test with heroism / 4.0 weapon
     cooldown_up_in(swing_speed)
   end
 

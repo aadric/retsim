@@ -29,17 +29,17 @@ class TemplarsVerdict < Ability
     dmg *= 1.2 if @player.two_handed_specialization
 
     @attack = @player.special_attack_table(:crit_chance => crit_chance)
-    case @attack
-      when :crit then dmg *= @player.crit_multiplier(:physical)
-      when :miss then dmg = 0
-      when :dodge then dmg = 0
-    end
+    dmg *= @player.crit_multiplier(:physical) if @attack == :crit
+
     @mob.deal_damage(:templars_verdict, @attack, dmg.round)
 
-    hand_of_light_dmg = dmg * @player.mastery_percent
-    hand_of_light_dmg * 1.3 if @player.inquisition.active?
-    # TODO avenging wrath?
-    @mob.deal_damage(:hand_of_light, :hit, hand_of_light_dmg)
+    unless [:miss, :dodge].include?(@attack)
+      hand_of_light_dmg = dmg * @player.mastery_percent
+      hand_of_light_dmg *= 1.3 if @player.inquisition.active?
+      hand_of_light_dmg *= 1.08 if @mob.debuff_spell_damage
+
+      @mob.deal_damage(:hand_of_light, :hit, hand_of_light_dmg)
+    end
 
     # We keep our holy power on a dodge or a miss
     unless [:miss, :dodge].include?(@attack)
@@ -50,8 +50,7 @@ class TemplarsVerdict < Ability
       end
     end
 
-    @player.is_gcd_locked = true
-    Event.new(@player, "clear_gcd", 1.5)
+    @player.lock_gcd
   end
 
   def crit_chance

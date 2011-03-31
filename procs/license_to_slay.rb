@@ -1,4 +1,4 @@
-class LicenseToSlay < Trinket # What is the lore behind this item?
+class LicenseToSlay < SpecProc # What is the lore behind this item?
   PROCS_OFF_OF = %w{autoattack crusader_strike hammer_of_wrath templars_verdict} # TODO confirm
 
   attr_reader :stacks

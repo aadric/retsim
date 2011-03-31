@@ -1,4 +1,5 @@
-class Trinket
+# Any complicated trinket, enchant, or tinker (not ret specific)
+class SpecProc # "Proc" is a reserved word in Ruby
 
   def initialize(player, mob)
     @player = player
@@ -10,6 +11,17 @@ class Trinket
     off_internal_cooldown if kind_of?(InternalCooldown)
     clear_buff if kind_of?(Buff)
   end
+
+  module ProcsPerMinute
+
+    # Calculates procs per hit based on un-hasted weapon speed
+    def pph(ppm)
+      # http://www.wowpedia.org/Ppm 
+      # PPH is unaffected by haste
+      @player.weapon_speed * ppm / 60
+    end
+  end
+    
 
   module OnUseCooldown
     def off_cooldown

@@ -1,4 +1,4 @@
-class FuryOfAngerforge346 < Trinket # Best item name ever
+class FuryOfAngerforge346 < SpecProc # Best item name ever
   include Buff
   include OnUseCooldown
   include InternalCooldown

@@ -8,11 +8,9 @@ class DivinePurpose < Ability
     @player.exorcism.extend(DivinePurposeRoll)
     @player.templars_verdict.extend(DivinePurposeRoll)
     @player.inquisition.extend(DivinePurposeRoll)
-    # TODO DS
     @player.holy_wrath.extend(DivinePurposeRoll)
-    @hammer_of_wrath.extend(DivinePurposeRoll)
-
-    @player.extend(DivinePurposeReset)
+    @player.hammer_of_wrath.extend(DivinePurposeRoll)
+    # TODO DS
   end
 
   def roll
@@ -27,14 +25,9 @@ class DivinePurpose < Ability
   module DivinePurposeRoll
     def use
       super
+      # TODO can divine purpose proc off misses/dodges?
       @player.divine_purpose.roll
     end
   end
 
-  module DivinePurposeReset
-    def reset
-      super
-      divine_purpose.reset
-    end
-  end
 end

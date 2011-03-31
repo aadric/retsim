@@ -46,13 +46,13 @@ class Exorcism < Ability
 
     crit_chance = 1 if @mob.type == :undead or @mob.type == :demon
 
-    attack = @player.spell_table(crit_chance)
+    @attack = @player.spell_table(crit_chance)
 
-    dmg *= @player.crit_multiplier(:magic) if attack == :crit
+    dmg *= @player.crit_multiplier(:magic) if @attack == :crit
 
-    @mob.deal_damage(:exorcism, attack, dmg.round)
+    @mob.deal_damage(:exorcism, @attack, dmg.round)
     
-    if @player.glyph_of_exorcism and attack != :miss # I'm assuming the dot application can't miss independant of exorcism
+    if @player.glyph_of_exorcism and @attack != :miss # I'm assuming the dot application can't miss independant of exorcism
       # If there is a dot on it, the dot is removed TODO validate this behavior 
       @next_dot_event.kill if @next_dot_event
       # TODO confirm glyph dot is sped up by haste
@@ -60,8 +60,7 @@ class Exorcism < Ability
       @remaining_dot_ticks = 3
     end
 
-    @player.is_gcd_locked = true
-    Event.new(@player, "clear_gcd", @player.hasted_cast)
+    @player.lock_gcd(:hasted => true)
   end
 
   def proc_art_of_war

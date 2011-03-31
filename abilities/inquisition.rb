@@ -19,8 +19,7 @@ class Inquisition < Ability
 
     buff_expires_in(duration) 
 
-    @player.is_gcd_locked = true
-    Event.new(@player, "clear_gcd", @player.hasted_cast)
+    @player.lock_gcd(:hasted => true)
   end
 
   def useable?
