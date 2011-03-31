@@ -7,7 +7,8 @@ class Mob
                 :debuff_spell_damage,     # 8% spell damage. Master Poisoner, Curse of Elements, etc
                 :debuff_spell_crit        # 5% spell crit. Critical Mass, Shadow and Flame, etc
 
-  def initialize()
+  def initialize(sim)
+    @sim = sim
     @damage_dealt = 0
   end
 
@@ -27,7 +28,7 @@ class Mob
     raise "Invalid attack type" unless [:miss, :dodge, :hit, :crit, :glancing].include?(type)
     dmg = 0 if [:miss, :dodge].include?(type)
     @damage_dealt += dmg
-    Statistics.instance.log_damage(ability, type, dmg)
+    @sim.stats.log_damage(ability, type, dmg)
   end
 
   def remaining_damage

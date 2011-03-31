@@ -1,30 +1,21 @@
 class Runner
-  include Singleton
-  attr_reader :duration, :current_time, :fights
+  attr_reader :duration, :current_time, :fights, :queue
 
   # Accepts duration in seconds
-  def initialize
+  def initialize(sim)
+    @sim = sim
     @current_time = 0
-    @queue = PriorityQueue.instance
-    @queue.clear
+    @queue = PriorityQueue.new
 
-    #@confidence_level = 1.644854 # 90%
-    @confidence_level = 1.95996 # 95%
+    @confidence_level = 1.644854 # 90%
+    #@confidence_level = 1.95996 # 95%
     #@confidence_level = 2.32635 # 98%
     @margin_of_error_allowed = 20 # +/- dps
 
     # Don't use anything less than 98% and +/- 20 DPS for anything serious
   end
 
-  def reset
-    initialize
-  end
-
-  def self.current_time
-    self.instance.current_time
-  end
-
-  def run(player, mob)
+  def run
     tick = 0
     i = 0
     start_time = 0
@@ -33,10 +24,10 @@ class Runner
 
     last_damage = 0
     while going
-      start_time = Runner.current_time
+      start_time = current_time
       i += 1
-      player.autoattack.use
-      while mob.remaining_damage > 0
+      @sim.player.autoattack.use
+      while @sim.mob.remaining_damage > 0
         unless @queue.empty?
           event = @queue.pop
           
@@ -45,21 +36,21 @@ class Runner
           event.execute
           end
 
-        unless player.is_gcd_locked 
+        unless @sim.player.is_gcd_locked 
           yield 
         end
       end
 
-      this_fights_damage = Statistics.instance.total_damage - last_damage
-      this_fights_duration = Runner.current_time - start_time
+      this_fights_damage = @sim.stats.total_damage - last_damage
+      this_fights_duration = current_time - start_time
 
       dpses << this_fights_damage / (this_fights_duration / 1000)
       
-      last_damage = Statistics.instance.total_damage
-      last_time = Runner.current_time
+      last_damage = @sim.stats.total_damage
+      last_time = current_time
 
       if(i % 100 == 0)
-        avg_dps = Statistics.instance.total_damage / (Runner.current_time / 1000)
+        avg_dps = @sim.stats.total_damage / (current_time / 1000)
 
 
         standard_deviation = dpses.inject(0) do |sum, item|
@@ -74,23 +65,20 @@ class Runner
           going = false
         end
 
-        #puts "fights = " + i.to_s
-        #puts "avg dps " + avg_dps.to_s
-        #puts "margin_of_error = " + margin_of_error.to_s
+        puts "fights = " + i.to_s
+        puts "avg dps " + avg_dps.to_s
+        puts "margin_of_error = " + margin_of_error.to_s
       end
 
 
       # Collect some stats
-      fight_length = (Runner.current_time - start_time) / 1000
-      Statistics.instance.fights << fight_length
+      fight_length = (current_time - start_time) / 1000
+      @sim.stats.fights << fight_length
 
       # Reset the fight    
-      player.reset
-      mob.reset
+      @sim.player.reset
+      @sim.mob.reset
       @queue.clear
     end
   end
 end
-
-
-

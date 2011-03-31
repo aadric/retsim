@@ -1,15 +1,15 @@
 class AvengingWrath < Ability
   
-  def initialize(player, mob)
-    super
-    @player.extend(AugmentMultipliers)
+  def initialize(sim)
+    super(sim)
+    @sim.player.extend(AugmentMultipliers)
   end
 
   def use
     raise "Can't use avenging wrath yet" unless usable?
     cooldown = 3 * 60 # 3 minutes
 
-    cooldown -= 20 * @player.talent_sanctified_wrath if @player.talent_sanctified_wrath # Less 20 seconds per point in talent
+    cooldown -= 20 * @sim.player.talent_sanctified_wrath if @sim.player.talent_sanctified_wrath # Less 20 seconds per point in talent
 
     cooldown_up_in(cooldown)
 

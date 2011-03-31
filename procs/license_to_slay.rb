@@ -3,19 +3,19 @@ class LicenseToSlay < SpecProc # What is the lore behind this item?
 
   attr_reader :stacks
 
-  def initialize(player, mob)
-    super(player, mob)
+  def initialize(sim)
+    super(sim)
 
-    player.instance_variable_set(:@license_to_slay, self)
+    @sim.player.instance_variable_set(:@license_to_slay, self)
     Player.send("attr_reader", :license_to_slay)
 
     @stacks = 0
 
     PROCS_OFF_OF.each do |ability_name|
-      player.send(ability_name).extend(ProcTrinket)
+      @sim.player.send(ability_name).extend(ProcTrinket)
     end
 
-    player.extend(AugmentPlayerStrength)
+    @sim.player.extend(AugmentPlayerStrength)
   end
 
   def reset
@@ -40,7 +40,7 @@ class LicenseToSlay < SpecProc # What is the lore behind this item?
     def use
       super
       unless [:miss, :dodge].include?(@attack)
-        @player.license_to_slay.proc
+        @sim.player.license_to_slay.proc
       end
     end
   end

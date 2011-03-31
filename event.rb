@@ -1,13 +1,13 @@
 class Event
   attr_reader :time, :indentifier
 
-  def initialize(obj, method_name, interval, identifier = :unknown)
+  def initialize(sim, obj, method_name, interval, identifier)
     @obj = obj
     @method_name = method_name
-    @time = Runner.current_time + interval * 1000
+    @time = sim.runner.current_time + interval * 1000
     @identifier = identifier
     
-    PriorityQueue.instance.push(self, time)
+    sim.runner.queue.push(self, time)
   end
   
   def execute

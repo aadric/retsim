@@ -4,8 +4,6 @@ class Statistics
   attr_reader :hash
   attr_accessor :fights
 
-  include Singleton
-
   def initialize
     @fights = []
 

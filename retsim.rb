@@ -9,6 +9,7 @@ require_relative "runner"
 require_relative "reporting/reporting"
 require_relative "utils"
 require_relative "config_parser"
+require_relative "simulation.rb"
 
 require_relative "abilities/ability.rb"
 Dir["abilities/*.rb"].each {|file| require_relative file}
@@ -20,91 +21,37 @@ include Containers
 
 srand Time.now.to_i
 
-mob = Mob.new
+class Priority1
+  def next_attack
 
-player = Player.new(mob)
-
-# TODO add configuration option to break up mastery damage by CS and TV
-ConfigParser.parse("config.txt", player, mob)
-
-def run_sim(player, mob)
-  Runner.instance.run(player, mob) do 
-    if player.heroism.usable?
-      player.heroism.use
-    end
-    
-    if player.guardian_of_ancient_kings.usable?
-      player.guardian_of_ancient_kings.use
-    end
-
-    if player.zealotry.usable?
-      player.zealotry.use
-    end
-
-    # Cast at 6 seconds or less of inquisition if we have full holy power
-    if player.has_holy_power(3) and player.inquisition.buff_remaining <= 0
-      player.inquisition.use
-      next
-    end
-
-    unless player.avenging_wrath.on_cooldown?
-      player.use_trinkets
-      player.avenging_wrath.use
-    end
-
-    # Cast Crusader Strike if we dont have 3 HP
-    if player.crusader_strike.usable? and player.holy_power < 3
-      player.crusader_strike.use
-      next
-    end
-    
-    # Cast at 6 seconds or less of inquisition if we have full holy power
-    if player.has_holy_power(3) and player.inquisition.buff_remaining < 6
-      player.inquisition.use
-      next
-    end
-
-    # Cast TV if we can
-    if player.has_holy_power(3)
-      player.use_trinkets
-      player.templars_verdict.use
-      next
-    end
-
-    if player.hammer_of_wrath.usable?
-      player.hammer_of_wrath.use
-      next
-    end
-
-    if player.exorcism.art_of_war_proc?
-      player.exorcism.use
-      next
-    end
-
-    if player.judgement.usable?
-      player.judgement.use
-      next
-    end
-
-    if player.holy_wrath.usable?
-      player.holy_wrath.use
-      next
-    end
-
-    if player.consecration.usable?
-      player.consecration.use
-      next
-    end
   end
 end
 
-def reset_sim(player, mob)
-  player.reset_bonuses
-  player.reset
-  mob.reset
-  Statistics.instance.reset
-  Runner.instance.reset
-end
+sim1 = sim2 = nil
+
+t1 = Thread.new {
+  sim1 = Simulation.new("config.txt", {}, Priority1)
+  sim1.run
+}
+
+t2 = Thread.new {
+  sim2 = Simulation.new("config.txt", {}, Priority1)
+  sim2.run
+}
+
+t1.join
+t2.join
+
+temp = Reporting.new(sim1)
+temp.generate_report
+exit
+#def reset_sim(player, mob)
+#  player.reset_bonuses
+#  player.reset
+#  mob.reset
+#  Statistics.instance.reset
+#  Runner.instance.reset
+#end
 
 #run_sim(player, mob)
 

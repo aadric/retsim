@@ -1,7 +1,7 @@
 class Consecration < Ability
   
-  def initialize(player, mob)
-    super(player, mob)
+  def initialize(sim)
+    super(sim)
 
     @remaining_ticks = 0
   end
@@ -23,35 +23,35 @@ class Consecration < Ability
 
     @dmg = 810
 
-    @dmg += @player.calculated_attack_power * 0.27
-    @dmg += @player.calculated_spell_power * 0.27
+    @dmg += @sim.player.calculated_attack_power * 0.27
+    @dmg += @sim.player.calculated_spell_power * 0.27
 
 
-    @remaining_ticks = @player.glyph_of_consecration ? 12 : 10
+    @remaining_ticks = @sim.player.glyph_of_consecration ? 12 : 10
 
-    cooldown = @player.glyph_of_consecration ? 36 : 30
+    cooldown = @sim.player.glyph_of_consecration ? 36 : 30
     cooldown_up_in(cooldown) 
 
-    @next_tick_event = Event.new(self, "tick", 1) 
+    @next_tick_event = @sim.new_event(self, "tick", 1) 
 
-    @player.lock_gcd(:hasted => true)
+    @sim.player.lock_gcd(:hasted => true)
   end
 
   def tick
     # Turning your aura on/off changes damage instantly
     # TODO confirm works with inquisition
-    dmg = @dmg * @player.magic_bonus_multiplier / 10
+    dmg = @dmg * @sim.player.magic_bonus_multiplier / 10
 
-    attack = @player.spell_table
+    attack = @sim.player.spell_table
 
-    dmg *= @player.crit_multiplier(:magic) if attack == :crit
+    dmg *= @sim.player.crit_multiplier(:magic) if attack == :crit
 
-    @mob.deal_damage(:consecration, attack, dmg.prob_round)
+    @sim.mob.deal_damage(:consecration, attack, dmg.prob_round)
     @remaining_ticks -= 1
     if @remaining_ticks > 0
       # Haste does not increase the speed of Consecration ticks
       # http://maintankadin.failsafedesign.com/forum/index.php?p=641054&rb_v=viewtopic#p641054 
-      @next_tick_event = Event.new(self, "tick", 1)
+      @next_tick_event = @sim.new_event(self, "tick", 1)
     end
   end
 end

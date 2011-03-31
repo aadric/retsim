@@ -6,17 +6,17 @@ class Landslide < SpecProc
   # TODO confirm what procs this
   PROCS_OFF_OF = %w{autoattack crusader_strike judgement templars_verdict} # Guesswork based off of righg eye of rajh
 
-  def initialize(player, mob)
-    super(player, mob)
+  def initialize(sim)
+    super(sim)
 
-    player.instance_variable_set(:@landslide, self)
+    @sim.player.instance_variable_set(:@landslide, self)
     Player.send("attr_reader", :landslide)
 
     PROCS_OFF_OF.each do |ability_name|
-      player.send(ability_name).extend(ProcLandslide)
+      @sim.player.send(ability_name).extend(ProcLandslide)
     end
 
-    player.extend(AugmentPlayerAttackPower)
+    @sim.player.extend(AugmentPlayerAttackPower)
   end
 
   def use
@@ -33,7 +33,7 @@ class Landslide < SpecProc
     def use
       super
       unless [:miss, :dodge].include?(@attack)
-        @player.landslide.proc_attempt
+        @sim.player.landslide.proc_attempt
       end
     end
   end

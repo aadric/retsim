@@ -1,9 +1,9 @@
 class Zealotry < Ability
 
-  def initialize(player)
-    super(player, nil)
+  def initialize(sim)
+    super(sim)
 
-    @player.crusader_strike.extend(ZealotryCheck)
+    @sim.player.crusader_strike.extend(ZealotryCheck)
   end
 
   def use
@@ -17,14 +17,14 @@ class Zealotry < Ability
   end
 
   def useable?
-    super and @player.has_holy_power(3)
+    super and @sim.player.has_holy_power(3)
   end
 
   module ZealotryCheck
     def increase_holy_power
-      if @player.zealotry.active?
+      if @sim.player.zealotry.active?
         # TODO log statistics
-        @player.holy_power = 3 
+        @sim.player.holy_power = 3 
       else
         super
       end

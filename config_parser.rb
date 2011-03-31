@@ -13,7 +13,7 @@ class ConfigParser
   end
 
   # Parse a config file and apply values to player and mob
-  def self.parse(filename, player, mob) 
+  def self.parse(filename, sim) 
     obj = nil
     File.foreach(filename) do |line|
       line.strip!
@@ -28,8 +28,8 @@ class ConfigParser
           value = self.convert_value(value)
           obj.send(operator+"=", value)
         else 
-          obj = player if line == "++ PLAYER ++"
-          obj = mob if line == "++ MOB ++"
+          obj = sim.player if line == "++ PLAYER ++"
+          obj = sim.mob if line == "++ MOB ++"
         end
       end
     end

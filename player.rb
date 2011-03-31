@@ -1,6 +1,6 @@
 class Player
   include CombatConstants
-  attr_accessor :mob, :level, :race
+  attr_accessor :level, :race
 
   # state of player
   attr_accessor :is_gcd_locked,
@@ -69,29 +69,30 @@ class Player
   # Bump for calculating stat values
   attr_accessor :bonus_ap, :bonus_str, :bonus_crit, :bonus_mastery, :bonus_haste, :bonus_hit, :bonus_exp
 
-  def initialize(mob)
-    @mob = mob  
+  def initialize(sim)
+    @sim = sim
+    sim.player = self
     @holy_power = 0
 
     # abilities
     # TODO automate this
     @abilities = []
-    @abilities << @autoattack = AutoAttack.new(self,@mob)
-    @abilities << @crusader_strike = CrusaderStrike.new(self, @mob)
-    @abilities << @exorcism = Exorcism.new(self, @mob)
-    @abilities << @templars_verdict = TemplarsVerdict.new(self, @mob)
-    @abilities << @holy_wrath = HolyWrath.new(self, @mob)
-    @abilities << @hammer_of_wrath = HammerOfWrath.new(self, @mob)
-    @abilities << @judgement = Judgement.new(self, @mob)
-    @abilities << @inquisition = Inquisition.new(self, @mob)
+    @abilities << @autoattack = AutoAttack.new(sim)
+    @abilities << @crusader_strike = CrusaderStrike.new(sim)
+    @abilities << @exorcism = Exorcism.new(sim)
+    @abilities << @templars_verdict = TemplarsVerdict.new(sim)
+    @abilities << @holy_wrath = HolyWrath.new(sim)
+    @abilities << @hammer_of_wrath = HammerOfWrath.new(sim)
+    @abilities << @judgement = Judgement.new(sim)
+    @abilities << @inquisition = Inquisition.new(sim)
 
-    @abilities << @zealotry = Zealotry.new(self)
-    @abilities << @avenging_wrath = AvengingWrath.new(self, @mob)
-    @abilities << @divine_purpose = DivinePurpose.new(self) 
-    @abilities << @guardian_of_ancient_kings = GuardianOfAncientKings.new(self, @mob)
-    @abilities << @seal_of_truth = SealOfTruth.new(self, @mob)
-    @abilities << @heroism = Heroism.new(self, @mob)
-    @abilities << @consecration = Consecration.new(self, @mob)
+    @abilities << @zealotry = Zealotry.new(sim)
+    @abilities << @avenging_wrath = AvengingWrath.new(sim)
+    @abilities << @divine_purpose = DivinePurpose.new(sim) 
+    @abilities << @guardian_of_ancient_kings = GuardianOfAncientKings.new(sim)
+    @abilities << @seal_of_truth = SealOfTruth.new(sim)
+    @abilities << @heroism = Heroism.new(sim)
+    @abilities << @consecration = Consecration.new(sim)
 
     @procs = []
 
@@ -121,7 +122,7 @@ class Player
   end
 
   def proc=(proc_sym)
-    @procs << Kernel.const_get(proc_sym.to_s.camelize).new(self, @mob) 
+    @procs << Kernel.const_get(proc_sym.to_s.camelize).new(@sim) 
   end
 
   alias :trinket= :proc=
@@ -204,7 +205,7 @@ class Player
     params[:hasted] ||= false
     @is_gcd_locked = true
     duration = params[:hasted] ? hasted_cast : GLOBAL_COOLDOWN
-    Event.new(self, "clear_gcd", duration)
+    @sim.new_event(self, "clear_gcd", duration)
   end
 
   # Returns weapon damage at this exact moment
@@ -240,13 +241,13 @@ class Player
     percent = talent_communion ? 0.02 : 0
     percent += 0.03 if buff_damage # TODO find out why this is additive, should be easy to check
     multiplier = 1 + percent
-    multiplier *= 1.08 if @mob.debuff_spell_damage
+    multiplier *= 1.08 if @sim.mob.debuff_spell_damage
     return multiplier
   end 
 
   def physical_bonus_multiplier
     percent = talent_communion ? 0.02 : 0
-    percent += 0.04 if @mob.debuff_physical_damage
+    percent += 0.04 if @sim.mob.debuff_physical_damage
     multiplier = 1 + percent
     multiplier *= 1.03 if buff_damage # TODO why is this multiplicative here and additve in magic?
     return multiplier
@@ -286,7 +287,7 @@ class Player
   def spell_crit_chance
     spell_crit_chance = 0.033355
     spell_crit_chance += 0.05 if buff_crit
-    spell_crit_chance += 0.05 if @mob.debuff_spell_crit
+    spell_crit_chance += 0.05 if @sim.mob.debuff_spell_crit
     spell_crit_chance += (crit_rating + bonus_crit)  / 179.28 / 100
     spell_crit_chance -= 0.021
   end
@@ -371,7 +372,7 @@ class Player
     puts "Melee Dodge Chance".ljust(left_spacing) + melee_dodge_chance.to_s
     puts "Calculated Attack Power".ljust(left_spacing) + calculated_attack_power.to_s
     puts "Calculated Strength".ljust(left_spacing) + calculated_strength.to_s
-    puts "Armor Reduction".ljust(left_spacing) + @mob.damage_reduction_from_armor(@level).to_s
+    puts "Armor Reduction".ljust(left_spacing) + @sim.mob.damage_reduction_from_armor(@level).to_s
   end
 
   def use_trinkets
@@ -382,7 +383,7 @@ class Player
 
   def lockout_trinkets(seconds)
     raise "trinket lockout already in affect" if @trinket_lockout
-    @trinket_lockout = Event.new(self, "clear_trinket_lockout", seconds)
+    @trinket_lockout = @sim.new_event(self, "clear_trinket_lockout", seconds)
   end
 
   def clear_trinket_lockout

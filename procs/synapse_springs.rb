@@ -6,24 +6,24 @@ class SynapseSprings < SpecProc
   DURATION = 10
   COOLDOWN = 60
   
-  def initialize(player, mob)
-    super(player, mob)
+  def initialize(sim)
+    super(sim)
     
-    player.instance_variable_set(:@synapse_springs, self)
+    @sim.player.instance_variable_set(:@synapse_springs, self)
     Player.send("attr_reader", :synapse_springs)
 
-    player.extend(AugmentPlayerStrength)
+    @sim.player.extend(AugmentPlayerStrength)
   end
 
   def use
-    return if @player.trinkets_locked?
+    return if @sim.player.trinkets_locked?
     return unless usable?
 
     @active = true
     buff_expires_in(DURATION)
     cooldown_up_in(COOLDOWN)
 
-    @player.lockout_trinkets(20) # TODO Confirm value
+    @sim.player.lockout_trinkets(20) # TODO Confirm value
   end
 
   module AugmentPlayerStrength

@@ -9,17 +9,17 @@ class RightEyeOfRajh346 < SpecProc
 
   PROC_CHANCE = 0.5
 
-  def initialize(player, mob)
-    super(player, mob)
+  def initialize(sim)
+    super(sim)
 
-    player.instance_variable_set(:@right_eye_of_rajh_346, self)
+    @sim.player.instance_variable_set(:@right_eye_of_rajh_346, self)
     Player.send("attr_reader", :right_eye_of_rajh_346)
 
     PROCS_OFF_OF.each do |ability_name|
-      player.send(ability_name).extend(ProcTrinket)
+      @sim.player.send(ability_name).extend(ProcTrinket)
     end
 
-    player.extend(AugmentPlayerStrength)
+    @sim.player.extend(AugmentPlayerStrength)
   end
 
   def use
@@ -38,7 +38,7 @@ class RightEyeOfRajh346 < SpecProc
     def use
       super
       if @attack == :crit
-        @player.right_eye_of_rajh_346.try_to_proc(self)
+        @sim.player.right_eye_of_rajh_346.try_to_proc(self)
       end
     end
   end

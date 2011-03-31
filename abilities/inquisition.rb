@@ -1,29 +1,29 @@
 class Inquisition < Ability
 
-  def initialize(player, mob)
-    super(player, mob)
-    @player.extend(InquisitionBonus)
+  def initialize(sim)
+    super(sim)
+    @sim.player.extend(InquisitionBonus)
   end
 
   def use
     raise "Can't use inquisition without holy power" unless useable?
 
-    if @player.divine_purpose.active?
-      @player.divine_purpose.clear_buff
+    if @sim.player.divine_purpose.active?
+      @sim.player.divine_purpose.clear_buff
       duration = 12
     else
-      duration = 4 * @player.holy_power
-      duration *= 1 + 0.5 * @player.talent_inquiry_of_faith if @player.talent_inquiry_of_faith
-      @player.holy_power = 0
+      duration = 4 * @sim.player.holy_power
+      duration *= 1 + 0.5 * @sim.player.talent_inquiry_of_faith
+      @sim.player.holy_power = 0
     end
 
     buff_expires_in(duration) 
 
-    @player.lock_gcd(:hasted => true)
+    @sim.player.lock_gcd(:hasted => true)
   end
 
   def useable?
-    @player.has_holy_power
+    @sim.player.has_holy_power
   end
 
   module InquisitionBonus

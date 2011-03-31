@@ -1,8 +1,8 @@
 class Heroism < Ability
   
-  def initialize(player, mob)
-    super(player, mob)
-    @player.extend(HeroismHasteModifier)
+  def initialize(sim)
+    super(sim)
+    @sim.player.extend(HeroismHasteModifier)
   end
 
   def use

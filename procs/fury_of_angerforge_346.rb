@@ -10,25 +10,25 @@ class FuryOfAngerforge346 < SpecProc # Best item name ever
   # TODO confirm below
   PROCS_OFF_OF = %w{autoattack crusader_strike hammer_of_wrath templars_verdict} # Guesswork based off of righg eye of rajh
 
-  def initialize(player, mob)
-    super(player, mob)
+  def initialize(sim)
+    super(sim)
 
     @stacks = 0
 
-    player.instance_variable_set(:@fury_of_angerforge_346, self)
+    @sim.player.instance_variable_set(:@fury_of_angerforge_346, self)
     Player.send("attr_reader", :fury_of_angerforge_346)
 
     PROCS_OFF_OF.each do |ability_name|
-      player.send(ability_name).extend(ProcTrinket)
+      @sim.player.send(ability_name).extend(ProcTrinket)
     end
 
-    player.extend(AugmentPlayerStrength)
+    @sim.player.extend(AugmentPlayerStrength)
   end
 
 
   def use
     return unless usable?
-    return if @player.trinkets_locked?
+    return if @sim.player.trinkets_locked?
 
     @active = true
     buff_expires_in(DURATION)
@@ -36,7 +36,7 @@ class FuryOfAngerforge346 < SpecProc # Best item name ever
     
     clear_stacks
 
-    @player.lockout_trinkets(20) # TODO confirm 
+    @sim.player.lockout_trinkets(20) # TODO confirm 
   end
 
   def usable?
@@ -54,7 +54,7 @@ class FuryOfAngerforge346 < SpecProc # Best item name ever
 
   def clear_stacks_in(seconds)
     @clear_stacks_event.kill if @clear_stacks_event
-    @clear_stacks_event = Event.new(self, "clear_stacks", seconds)
+    @clear_stacks_event = @sim.new_event(self, "clear_stacks", seconds)
   end
 
   def clear_stacks
@@ -67,7 +67,7 @@ class FuryOfAngerforge346 < SpecProc # Best item name ever
     def use
       super
       unless [:miss, :dodge].include?(@attack)
-        @player.fury_of_angerforge_346.try_to_proc
+        @sim.player.fury_of_angerforge_346.try_to_proc
       end
     end
   end

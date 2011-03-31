@@ -4,31 +4,31 @@ class HammerOfWrath < Ability
     raise "Can't use Hammer of Wrath" unless usable?
 
     dmg = random(3815, 4215)
-    dmg += @player.calculated_attack_power * 0.39
-    dmg += @player.calculated_spell_power * 0.117
+    dmg += @sim.player.calculated_attack_power * 0.39
+    dmg += @sim.player.calculated_spell_power * 0.117
 
-    dmg *= @player.magic_bonus_multiplier
+    dmg *= @sim.player.magic_bonus_multiplier
 
     # Hammer of Wrath can miss based on melee hit but can't dodge or be parried
-    @attack = @player.special_attack_table(:ranged => true, :crit_chance => crit_chance)
+    @attack = @sim.player.special_attack_table(:ranged => true, :crit_chance => crit_chance)
 
-    dmg *= @player.crit_multiplier(:physical) if @attack == :crit
+    dmg *= @sim.player.crit_multiplier(:physical) if @attack == :crit
 
-    @mob.deal_damage(:hammer_of_wrath, @attack, dmg)
+    @sim.mob.deal_damage(:hammer_of_wrath, @attack, dmg)
     
     cooldown_up_in(6)
 
-    @player.lock_gcd
+    @sim.player.lock_gcd
   end
 
 
   def usable?
-    super and (@mob.flavor_country? or @player.avenging_wrath.active?)
+    super and (@sim.mob.flavor_country? or @sim.player.avenging_wrath.active?)
   end
 
   def crit_chance
-    crit_chance = @player.melee_crit_chance
-    crit_chance += 0.2 * @player.talent_sanctified_wrath if @player.talent_sanctified_wrath
+    crit_chance = @sim.player.melee_crit_chance
+    crit_chance += 0.2 * @sim.player.talent_sanctified_wrath 
     return crit_chance
   end
 

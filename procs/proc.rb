@@ -1,9 +1,8 @@
 # Any complicated trinket, enchant, or tinker (not ret specific)
 class SpecProc # "Proc" is a reserved word in Ruby
 
-  def initialize(player, mob)
-    @player = player
-    @mob = mob
+  def initialize(sim)
+    @sim = sim
   end
 
   def reset
@@ -18,7 +17,7 @@ class SpecProc # "Proc" is a reserved word in Ruby
     def pph(ppm)
       # http://www.wowpedia.org/Ppm 
       # PPH is unaffected by haste
-      @player.weapon_speed * ppm / 60
+      @sim.player.weapon_speed * ppm / 60
     end
   end
     
@@ -36,7 +35,7 @@ class SpecProc # "Proc" is a reserved word in Ruby
     # Returns time until cooldown is up in seconds
     def cooldown_remaining
       return 0 unless @cooldown_reset_event
-      return (@cooldown_reset_event.time - Runner.current_time) / 1000
+      return (@cooldown_reset_event.time - @sim.runner.current_time) / 1000
     end
 
     def usable?
@@ -45,7 +44,7 @@ class SpecProc # "Proc" is a reserved word in Ruby
     end
 
     def cooldown_up_in(seconds)
-      @cooldown_reset_event = Event.new(self, "off_cooldown", seconds)
+      @cooldown_reset_event = @sim.new_event(self, "off_cooldown", seconds)
     end
   end
 
@@ -60,7 +59,7 @@ class SpecProc # "Proc" is a reserved word in Ruby
     end
 
     def internal_cooldown_up_in(seconds)
-      @internal_cooldown_reset_event = Event.new(self, "off_internal_cooldown", seconds)
+      @internal_cooldown_reset_event = @sim.new_event(self, "off_internal_cooldown", seconds)
     end
   end
 
@@ -76,12 +75,12 @@ class SpecProc # "Proc" is a reserved word in Ruby
 
     def buff_remaining
       return 0 unless @clear_buff_event
-      return (@clear_buff_event.time - Runner.current_time) / 1000
+      return (@clear_buff_event.time - @sim.runner.current_time) / 1000
     end 
 
     def buff_expires_in(seconds)
       @clear_buff_event.kill if @clear_buff_event
-      @clear_buff_event = Event.new(self, "clear_buff", seconds)
+      @clear_buff_event = @sim.new_event(self, "clear_buff", seconds)
     end
   end
 end

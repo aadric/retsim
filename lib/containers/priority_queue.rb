@@ -1,5 +1,4 @@
 require './lib/containers/heap'
-require 'singleton'
 
 =begin rdoc
     A Priority Queue is a data structure that behaves like a queue except that elements have an
@@ -12,7 +11,6 @@ require 'singleton'
 =end
 class Containers::PriorityQueue
   include Enumerable
-  include Singleton # - changed
   
   # Create a new, empty PriorityQueue
   def initialize(&block)
