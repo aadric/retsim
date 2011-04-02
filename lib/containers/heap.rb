@@ -10,6 +10,7 @@
     This library implements a Fibonacci heap, which allows O(1) complexity for most methods.
 =end
 class Containers::Heap
+  attr_reader :stored
   include Enumerable
   
   # call-seq:
@@ -21,6 +22,15 @@ class Containers::Heap
   end
   alias_method :length, :size
   
+  def each
+    return if self.empty?
+    @stored.each do |key, ary|
+      ary.each do |node|
+        yield node.key, node.value
+      end
+    end
+  end
+
   # call-seq:
   #     Heap.new(optional_array) { |x, y| optional_comparison_fn } -> new_heap
   #

@@ -16,7 +16,7 @@ class Zealotry < Ability
     # Zealotry is off the GCD
   end
 
-  def useable?
+  def usable?
     super and @sim.player.has_holy_power(3)
   end
 

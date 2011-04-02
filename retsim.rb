@@ -10,6 +10,7 @@ require_relative "reporting/reporting"
 require_relative "utils"
 require_relative "config_parser"
 require_relative "simulation.rb"
+require_relative "priorities.rb"
 
 require_relative "abilities/ability.rb"
 Dir["abilities/*.rb"].each {|file| require_relative file}
@@ -21,104 +22,58 @@ include Containers
 
 srand Time.now.to_i
 
-class Priority1
-  def next_attack
-
+def calculate_ideal_delay
+  delay = 0.0
+  while delay < 1.5
+    sim = Simulation.new("config.txt", {}, PriorityWithDelay.new(delay)).run
+    temp = Reporting.new(sim)
+    temp.generate_report
+    puts delay.round_to(2).to_s + " = " + sim.dps.round.to_s
+    delay += 0.1
   end
 end
 
-sim1 = sim2 = nil
+def calculate_weights
+  increment = 200
 
-t1 = Thread.new {
-  sim1 = Simulation.new("config.txt", {}, Priority1)
-  sim1.run
-}
+  delay = 0.2
+  print "Calculating Base DPS... ".ljust(30)
+  baseline_sim = Simulation.new("config.txt", {}, PriorityWithDelay.new(delay)).run
+  puts baseline_sim.dps.round.to_s
 
-t2 = Thread.new {
-  sim2 = Simulation.new("config.txt", {}, Priority1)
-  sim2.run
-}
+  temp = Reporting.new(baseline_sim)
+  temp.generate_report
 
-t1.join
-t2.join
+  print "Calculating AP DPS... ".ljust(30)
+  sim_ap = Simulation.new("config.txt", {:attack_power => increment}, PriorityWithDelay.new(delay)).run
+  puts "1"
 
-temp = Reporting.new(sim1)
-temp.generate_report
-exit
-#def reset_sim(player, mob)
-#  player.reset_bonuses
-#  player.reset
-#  mob.reset
-#  Statistics.instance.reset
-#  Runner.instance.reset
-#end
+  ap_diff = sim_ap.dps - baseline_sim.dps.to_f
 
-#run_sim(player, mob)
+  print "Calculating Str DPS... ".ljust(30)
+  sim = Simulation.new("config.txt", {:strength => increment}, PriorityWithDelay.new(delay)).run
+  puts ((sim.dps-baseline_sim.dps) / ap_diff).round_to(2)
 
+  print "Calculating Hit DPS... ".ljust(30)
+  sim = Simulation.new("config.txt", {:hit_rating => increment}, PriorityWithDelay.new(delay)).run
+  puts ((sim.dps-baseline_sim.dps) / ap_diff).round_to(2)
 
-#exit
+  print "Calculating Exp DPS... ".ljust(30)
+  sim = Simulation.new("config.txt", {:expertise_rating => increment}, PriorityWithDelay.new(delay)).run
+  puts ((sim.dps-baseline_sim.dps) / ap_diff).round_to(2)
 
-increment = 200
+  print "Calculating Mastery DPS... ".ljust(30)
+  sim = Simulation.new("config.txt", {:mastery_rating => increment}, PriorityWithDelay.new(delay)).run
+  puts ((sim.dps-baseline_sim.dps) / ap_diff).round_to(2)
 
-print "Calculating Base DPS... ".ljust(30)
-reset_sim(player, mob)
-run_sim(player, mob)
-baseline_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
-puts baseline_dps.round.to_s
+  print "Calculating Crit DPS... ".ljust(30)
+  sim = Simulation.new("config.txt", {:crit_rating => increment}, PriorityWithDelay.new(delay)).run
+  puts ((sim.dps-baseline_sim.dps) / ap_diff).round_to(2)
 
-temp = Reporting.new(Statistics.instance, Runner.current_time)
-temp.generate_report
-reset_sim(player, mob)
+  print "Calculating Haste DPS... ".ljust(30)
+  sim = Simulation.new("config.txt", {:haste_rating => increment}, PriorityWithDelay.new(delay)).run
+  puts ((sim.dps-baseline_sim.dps) / ap_diff).round_to(2)
+end
 
-#exit
-
-print "Calculating AP DPS... ".ljust(30)
-player.bonus_ap = increment
-run_sim(player, mob)
-ap_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
-puts "1"
-
-ap_diff = ap_dps - baseline_dps
-
-reset_sim(player, mob)
-print "Calculating Str DPS... ".ljust(30)
-player.bonus_str = increment
-run_sim(player, mob)
-str_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
-puts ((str_dps-baseline_dps) / ap_diff).round_to(2)
-
-#reset_sim(player, mob)
-#print "Caulcating Hit DPS... ".ljust(30)
-#player.bonus_hit = increment
-#run_sim(player, mob)
-#hit_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
-#puts hit_dps.round.to_s
-#
-#reset_sim(player, mob)
-#print "Calculating Exp DPS... ".ljust(30)
-#player.bonus_exp = increment
-#run_sim(player, mob)
-#exp_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
-#puts exp_dps.round.to_s
-
-reset_sim(player, mob)
-print "Calculating Mastery DPS... ".ljust(30)
-player.bonus_mastery = increment
-run_sim(player, mob)
-mastery_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
-puts ((mastery_dps - baseline_dps) / ap_diff).round_to(2)
-
-reset_sim(player, mob)
-print "Calculating Crit DPS... ".ljust(30)
-player.bonus_crit = increment
-run_sim(player, mob)
-crit_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
-puts ((crit_dps - baseline_dps) / ap_diff).round_to(2)
-
-reset_sim(player, mob)
-print "Calculating Haste DPS... ".ljust(30)
-player.bonus_haste = increment
-run_sim(player, mob)
-haste_dps = Statistics.instance.total_damage / (Runner.instance.current_time / 1000)
-puts ((haste_dps - baseline_dps) / ap_diff).round_to(2)
-
+#calculate_weights
+calculate_ideal_delay

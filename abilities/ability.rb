@@ -28,7 +28,7 @@ class Ability
   # Returns time until cooldown is up in seconds
   def cooldown_remaining
     return 0 unless @cooldown_reset_event
-    return (@cooldown_reset_event.time - @sim.runner.current_time) / 1000
+    return (@cooldown_reset_event.time - @sim.runner.current_time) / 1000.0
   end
 
   def cooldown_up_in(seconds)

@@ -3,8 +3,7 @@ class Player
   attr_accessor :level, :race
 
   # state of player
-  attr_accessor :is_gcd_locked,
-                :holy_power             # 0,1,2,3
+  attr_accessor :holy_power             # 0,1,2,3
 
   # combat ratings and attributes from paper doll, without any buffs
   attr_accessor :hit_rating, :strength, :agility, :attack_power,
@@ -66,10 +65,7 @@ class Player
               :guardian_of_ancient_kings, :autoattack, :seal_of_truth, :inquisition, :heroism,
               :consecration
 
-  # Bump for calculating stat values
-  attr_accessor :bonus_ap, :bonus_str, :bonus_crit, :bonus_mastery, :bonus_haste, :bonus_hit, :bonus_exp
-
-  def initialize(sim)
+  def initialize(sim, augmentations)
     @sim = sim
     sim.player = self
     @holy_power = 0
@@ -96,19 +92,14 @@ class Player
 
     @procs = []
 
-    # TODO convert to hash
-    @bonus_ap = 0
-    @bonus_str = 0
-    @bonus_crit = 0
-    @bonus_mastery = 0
-    @bonus_haste = 0
-    @bonus_hit = 0
-    @bonus_exp = 0
+    # Stat changes we make for the purposes of testing (ie calculating stat weights)
+    # Negative numbers not necesarily safe (but probably are if you're using full gear)
+    @augmentations = Hash.new(0).merge(augmentations) # All augmentations default to 0
   end
 
   def reset
     @holy_power = 0
-    @is_gcd_locked = false
+    clear_gcd
     
     @abilities.each do |ability|
       ability.reset
@@ -128,28 +119,8 @@ class Player
   alias :trinket= :proc=
   alias :enchant= :proc=
 
-  def reset_bonuses
-    @bonus_ap = 0
-    @bonus_str = 0
-    @bonus_crit = 0
-    @bonus_mastery = 0
-    @bonus_haste = 0
-    @bonus_hit = 0
-    @bonus_exp = 0
-  end
-
-  def print_bonuses
-    puts "bonus ap " + @bonus_ap.to_s
-    puts "bonus str " + @bonus_str.to_s
-    puts "bonus_crit " + @bonus_crit.to_s
-    puts "bonus_mastery " + @bonus_mastery.to_s
-    puts "bonus_haste " + @bonus_haste.to_s
-    puts "bonus_hit " + @bonus_hit.to_s
-    puts "bonus_exp " + @bonus_exp.to_s
-  end
-
   def calculated_attack_power
-    ap = attack_power + bonus_ap
+    ap = attack_power + @augmentations[:attack_power]
     ap += 2 * total_strength_from_buffs_and_consumables
     ap *= 1.10 if buff_attack_power
     ap.round
@@ -177,7 +148,7 @@ class Player
   def additive_strength_from_buffs_and_consumables
     str = 0
 
-    str += bonus_str
+    str += @augmentations[:strength]
 
     str += 549 if buff_strength_and_agility
     str += 300 if flask_of_titanic_strength    
@@ -198,14 +169,24 @@ class Player
   end
 
   def clear_gcd
-    @is_gcd_locked = false
+    @gcd_lock.kill if @gcd_lock
+    @gcd_lock = nil
+  end
+  
+  def gcd_locked?
+    @gcd_lock==nil ? false : true
   end
 
   def lock_gcd(params = {})
+    raise "You are already locked" if gcd_locked?
     params[:hasted] ||= false
-    @is_gcd_locked = true
     duration = params[:hasted] ? hasted_cast : GLOBAL_COOLDOWN
-    @sim.new_event(self, "clear_gcd", duration)
+    @gcd_lock = @sim.new_event(self, "clear_gcd", duration)
+  end
+
+  def gcd_remaining
+    return 0 unless @gcd_lock
+    return (@gcd_lock.time - @sim.runner.current_time) / 1000
   end
 
   # Returns weapon damage at this exact moment
@@ -222,7 +203,7 @@ class Player
   # returns haste in % for either melee or spells
   def calculated_haste(type = :physical)
     raise "Wrong parameters for calculated_haste" unless [:physical, :magic].include?(type) # in case I accidently try to pass :melee or :spell
-    haste = (haste_rating + bonus_haste) / 128.05701 
+    haste = (haste_rating + @augmentations[:haste_rating]) / 128.05701 
     haste += 3 * talent_judgements_of_the_pure if talent_judgements_of_the_pure # TODO actually model this instead of cheating
     haste += 5 if buff_spell_haste and type == :magic
     haste += 10 if buff_physical_haste and type == :physical
@@ -255,14 +236,14 @@ class Player
 
   def mastery_percent  
     val = 0.168
-    val += (mastery_rating + bonus_mastery) / 179.28 * 0.021
+    val += (mastery_rating + @augmentations[:mastery_rating]) / 179.28 * 0.021
   end
 
   def melee_miss_chance
     # TODO replace with mob base hit_chance
     melee_miss_chance = 0.08
     # TODO replace with constant
-    melee_miss_chance -= (hit_rating + bonus_hit) / 120.109 / 100
+    melee_miss_chance -= (hit_rating + @augmentations[:hit_rating]) / 120.109 / 100
     melee_miss_chance -= 0.01 if race == :draenei
     return [melee_miss_chance, 0].max
   end
@@ -270,14 +251,14 @@ class Player
   def melee_dodge_chance
     melee_dodge_chance = 0.065
     melee_dodge_chance -= 0.025 if seal == :seal_of_truth and glyph_of_seal_of_truth
-    melee_dodge_chance -= (expertise_rating + bonus_exp) / 120.109 / 100
+    melee_dodge_chance -= (expertise_rating + @augmentations[:expertise_rating]) / 120.109 / 100
     return [melee_dodge_chance,0].max
   end
 
   def melee_crit_chance
     melee_crit_chance = 0.00652
     melee_crit_chance += 0.05 if buff_crit
-    melee_crit_chance += (crit_rating + bonus_crit) / 179.28 / 100
+    melee_crit_chance += (crit_rating + @augmentations[:crit_rating]) / 179.28 / 100
     melee_crit_chance += calculated_agility / 203.08 / 100
     melee_crit_chance -= 0.048
   end
@@ -288,13 +269,13 @@ class Player
     spell_crit_chance = 0.033355
     spell_crit_chance += 0.05 if buff_crit
     spell_crit_chance += 0.05 if @sim.mob.debuff_spell_crit
-    spell_crit_chance += (crit_rating + bonus_crit)  / 179.28 / 100
+    spell_crit_chance += (crit_rating + @augmentations[:crit_rating])  / 179.28 / 100
     spell_crit_chance -= 0.021
   end
 
   def spell_miss_chance
     miss_chance = 0.17
-    miss_chance -= (hit_rating + bonus_hit) / 102.446 / 100
+    miss_chance -= (hit_rating + @augmentations[:hit_rating]) / 102.446 / 100
     miss_chance -= 0.01 if race == :draenei
     miss_chance -= 0.08 
   end

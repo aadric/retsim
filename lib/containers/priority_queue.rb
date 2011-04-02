@@ -10,6 +10,7 @@ require './lib/containers/heap'
     This container is implemented using the Fibonacci heap included in the Collections library.
 =end
 class Containers::PriorityQueue
+  attr_reader :heap
   include Enumerable
   
   # Create a new, empty PriorityQueue
@@ -17,6 +18,12 @@ class Containers::PriorityQueue
     # We default to a priority queue that returns the SMALLEST value - changed
     block ||= lambda { |x, y| (y <=> x) == 1 }
     @heap = Containers::Heap.new(&block)
+  end
+
+  def each
+    @heap.each do |priority, object|
+      yield(priority, object)
+    end
   end
   
   # Returns the number of elements in the queue.
