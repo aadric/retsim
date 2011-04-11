@@ -37,6 +37,12 @@ class Mob
 
   # At or less than 20% health
   def flavor_country?
-    return (@health - @damage_dealt)/@health.to_f <= 0.20
+    if @sim.run_mode == :boss_health
+      return (@health - @damage_dealt)/@health.to_f <= 0.20
+    end
+    if @sim.run_mode == :time
+      return (@sim.runner.current_time - @sim.runner.start_time) / 1000.0 >= (@sim.runner.fight_length * 0.82)
+    end
+    raise "Error, unknown run type"
   end
 end

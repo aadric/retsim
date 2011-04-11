@@ -15,6 +15,7 @@ class AvengingWrath < Ability
 
     buff_expires_in(20)
 
+    @sim.mob.deal_damage(:avenging_wrath, :hit, 0) # Just to count them 
     # Avenging Wrath is off the GCD
   end
 

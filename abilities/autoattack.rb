@@ -1,7 +1,7 @@
 class AutoAttack < Ability
 
   def use
-    dmg = @weapon_dmg = @sim.player.weapon_damage # keep track of base weapon damage for procs
+    dmg = @sim.player.weapon_damage 
 
     @attack = @sim.player.autoattack_table # keep track of last attack type (:hit, :crit, etc)
 

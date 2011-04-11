@@ -7,7 +7,7 @@ class Ability
 
   def reset
     off_cooldown
-    clear_buff
+    clear_buff(:reset => true)
   end
 
   # Called when cooldown is up, or when cooldown is reset via talent or ability
@@ -35,7 +35,7 @@ class Ability
     @cooldown_reset_event = @sim.new_event(self, "off_cooldown", seconds)
   end
 
-  def clear_buff
+  def clear_buff(opts = {})
     @clear_buff_event.kill if @clear_buff_event
     @clear_buff_event = nil
   end

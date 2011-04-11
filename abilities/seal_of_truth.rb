@@ -5,8 +5,14 @@ class SealOfTruth < Ability
     super(sim)
 
     @censure_stacks = 0
-    @sim.player.autoattack.extend(AutoAttackProc)
-    # TODO A lot of stuff procs this not just autoattack
+    @sim.player.autoattack.extend(SoTProc)
+
+    @sim.player.crusader_strike.extend(SoTProc)
+    @sim.player.templars_verdict.extend(SoTProc)
+    @sim.player.judgement.extend(SoTProc)
+    @sim.player.exorcism.extend(SoTProc)
+    @sim.player.hammer_of_wrath.extend(SoTProc)
+    # Holy Wrath? TODO 
   end
 
   def reset
@@ -41,7 +47,10 @@ class SealOfTruth < Ability
     @sim.mob.deal_damage(:seal_of_truth, :hit, dmg)
   end
 
-  def autoattack_proc(weapon_dmg)
+  def attack_proc
+    # If SoT procs off of autoattack/crusader_strike, is weapon_damage recalculated or carried over?
+    weapon_dmg =  @sim.player.weapon_damage
+
     raise "Not using seal of truth" unless @sim.player.seal == :seal_of_truth
 
     seal_of_truth_dmg(weapon_dmg) if @censure_stacks > 0
@@ -99,11 +108,11 @@ class SealOfTruth < Ability
     @next_censure_tick = @sim.new_event(self, "censure_dot_damage", @sim.player.hasted_cast(3))   
   end
     
-  module AutoAttackProc
+  module SoTProc
     def use
       super
       if [:hit, :crit, :glancing].include?(@attack)
-        @sim.player.seal_of_truth.autoattack_proc(@weapon_dmg)
+        @sim.player.seal_of_truth.attack_proc
       end
     end
   end

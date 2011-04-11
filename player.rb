@@ -52,7 +52,8 @@ class Player
                 :talent_art_of_war                # 0,1,2,3
 
   # Set Bonuses
-  attr_accessor :set_bonus_t11_two_piece  # true / false
+  attr_accessor :set_bonus_t11_two_piece,  # true / false
+                :set_bonus_t11_four_piece  # We DO NOT assume two piece just because four piece is there
 
   attr_accessor :crit_meta_gem # true / false
 
@@ -63,9 +64,11 @@ class Player
   attr_reader :crusader_strike, :exorcism, :templars_verdict, :holy_wrath, :hammer_of_wrath,
               :judgement, :divine_purpose, :zealotry, :avenging_wrath,
               :guardian_of_ancient_kings, :autoattack, :seal_of_truth, :inquisition, :heroism,
-              :consecration
+              :consecration, :word_of_glory
 
-  def initialize(sim, augmentations)
+  attr_reader :abilities, :augmentations
+
+  def initialize(sim)
     @sim = sim
     sim.player = self
     @holy_power = 0
@@ -81,6 +84,7 @@ class Player
     @abilities << @hammer_of_wrath = HammerOfWrath.new(sim)
     @abilities << @judgement = Judgement.new(sim)
     @abilities << @inquisition = Inquisition.new(sim)
+    @abilities << @word_of_glory = WordOfGlory.new(sim)
 
     @abilities << @zealotry = Zealotry.new(sim)
     @abilities << @avenging_wrath = AvengingWrath.new(sim)
@@ -94,7 +98,7 @@ class Player
 
     # Stat changes we make for the purposes of testing (ie calculating stat weights)
     # Negative numbers not necesarily safe (but probably are if you're using full gear)
-    @augmentations = Hash.new(0).merge(augmentations) # All augmentations default to 0
+    @augmentations = Hash.new(0)
   end
 
   def reset

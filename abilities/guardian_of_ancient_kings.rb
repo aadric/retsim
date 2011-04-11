@@ -38,8 +38,11 @@ class GuardianOfAncientKings < Ability
     buff_expires_in(30)
   end
 
-  def clear_buff
+  def clear_buff(opts = {})
     super
+
+    return if opts[:reset]
+
     dmg = random(207,279) * @buff_count
 
     dmg *= @sim.player.magic_bonus_multiplier(:holy)

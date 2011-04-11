@@ -47,6 +47,16 @@ class Statistics
     end
   end
 
+  def total_damage_for_ability(ability)
+    @hash[ability].inject(0) do |sum, (outcome,values)|
+      sum + values[:damage]
+    end
+  end
+
+  def avg_damage_per_fight(ability)
+    total_damage_for_ability(ability) / fights.count.to_f
+  end
+
 
 end
 

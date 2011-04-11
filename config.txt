@@ -24,21 +24,21 @@ weapon_dmg_low_end  = 1795
 weapon_dmg_high_end = 2693
 
 # Raid Buffs, all true/false
-buff_stats                = false 
-buff_crit                 = false 
-buff_damage               = false 
-buff_spell_haste          = false 
-buff_spell_power_major    = false 
+buff_stats                = true 
+buff_crit                 = true 
+buff_damage               = true 
+buff_spell_haste          = true 
+buff_spell_power_major    = true 
 buff_spell_power_minor    = false 
-buff_physical_haste       = false 
-buff_attack_power         = false 
-buff_strength_and_agility = false 
+buff_physical_haste       = true 
+buff_attack_power         = true 
+buff_strength_and_agility = true 
 
 # Seals: seal_of_truth
 seal = seal_of_truth
 
 # Consumables
-flask_of_titanic_strength = false # true / false
+flask_of_titanic_strength = true # true / false
 strength_from_food = 0 # integer
 
 # Glyphs, true/false
@@ -47,6 +47,7 @@ glyph_of_judgement = false
 glyph_of_exorcism = true
 glyph_of_crusader_strike = false
 glyph_of_templars_verdict = true
+
 glyph_of_consecration = true
 
 plate_specialization = true   # true / false
@@ -67,7 +68,8 @@ talent_art_of_war = 3             # 0,1,2,3
 talent_judgements_of_the_pure = 3 # 0,1,2,3
 talent_divine_purpose = 2         # 0,1,2
 
-set_bonus_t11_two_piece = false
+set_bonus_t11_two_piece = true
+set_bonus_t11_four_piece = true
 #
 
 crit_meta_gem = true
@@ -76,13 +78,13 @@ trinket = fury_of_angerforge_346
 trinket = license_to_slay
 trinket = synapse_springs
 
-enchant = landslide
+#enchant = landslide
 
 ++ MOB ++
 level = 88
 type = unknown
 armor = 11977
-health = 6000000
+health = 7000000
 
 debuff_armor = true
 debuff_physical_damage = true  # 4% physical damage.  Brittle Bones, Blood Frenzy, etc

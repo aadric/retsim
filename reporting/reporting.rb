@@ -7,25 +7,78 @@ class Reporting
               A00000 00A000 0000A0 A0A000 A000A0 00A0A0 
               E00000 00E000 0000E0 E0E000 E000E0 00E0E0)
 
-  def initialize(sim)
+  def initialize(sim, opts = {})
     @sim = sim
+    @sim2 = opts[:sim2] ||= nil
+
+    @file_name = opts[:file_name] ||= "report.html"
+    
+
     @duration = @sim.runner.current_time
   end
 
   def generate_report
-    File.open("report.html", 'w') do |f|
+    File.open(@file_name, 'w') do |f|
       f.puts IO.read("reporting/header.html")
       f.puts "<p>"
       f.puts "Duration " + (@duration/1000/60).round.to_s + " minutes<br/>"
       f.puts "DPS " + (@sim.stats.total_damage/(@duration/1000)).round.to_s + "<br/>"
       f.puts "Average Fight Length " + (@sim.stats.fights.inject(&:+).to_f / @sim.stats.fights.size / 60).to_s + "<br/>"
+      f.puts "Fights " + (@sim.stats.fights.count).to_s + "<br/>"
       f.puts "</p>"
       f.puts output_table
       f.puts "<img id=\"pie_breakdown\" src=\""+generate_pie_graph_link+"\"/>"
+      if @sim2
+        f.puts "<img id=\"diff_graph\" src=\""+generate_difference_graph_link+"\"/>"
+      end
       f.puts IO.read("reporting/footer.html")
     end
   end
 
+
+  def generate_difference_graph_link
+    return nil unless @sim2
+
+    params = Array.new
+
+    params << "chxt=x"
+    params << "chbh=a"
+    params << "cht=bhg"
+    params << "chs=650x300"
+    params << "chtt="+CGI.escape("DPS Change")
+
+    data_points = Array.new
+    @sim.stats.hash.each do |ability, outcomes_hash|
+      data_point = DataPoint.new
+      data_point.name = ability.to_s.gsub(/_/,' ').gsub(/\b([a-z])/){$1.capitalize}
+      data_point.value = @sim2.stats.avg_damage_per_fight(ability) - @sim.stats.avg_damage_per_fight(ability) 
+      data_point.value = data_point.value / @sim.stats.avg_damage_per_fight(ability).to_f * 100
+      if data_point.value.nan?
+        next
+      end
+      data_point.value = data_point.value.round_to(2)
+      data_points << data_point
+    end
+
+    data_points.each_with_index do |obj, index|
+      obj.color = COLORS[index]
+    end
+
+    params << "chco=" + data_points.collect(&:color).join(",")
+    params << "chd=t:" + data_points.collect(&:value).join("|")
+    labels = data_points.map do |obj|
+      label = obj.name + " (" + (obj.value.round_to(2)).to_s + "%)"
+      CGI.escape(label)
+    end
+    params << "chdl=" + labels.join("|")
+    range = [data_points.collect(&:value).max, data_points.collect(&:value).min.abs].max
+    range += 5
+    range = range.to_s
+    params << "chds=-"+range+","+range
+    params << "chxr=0,-"+range+","+range
+
+    return "http://chart.googleapis.com/chart?" + params.join("&")
+  end
 
   def generate_pie_graph_link
     params = Array.new
@@ -34,7 +87,6 @@ class Reporting
     params << "cht=p"
     params << "chf=bg,s,FFFFFF"
    
-    i = 0
     data_points = Array.new
     # create objects for data
     @sim.stats.hash.each do |ability, outcomes_hash|
@@ -44,9 +96,8 @@ class Reporting
       outcomes_hash.each do |outcome, stats_hash| 
         total_damage += stats_hash[:damage]
       end
+      next if total_damage == 0
       data_point.value = total_damage
-      #data_point.color = COLORS[i]
-      i = i + 1
       data_points << data_point
     end
 

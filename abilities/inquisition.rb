@@ -13,12 +13,15 @@ class Inquisition < Ability
       duration = 12
     else
       duration = 4 * @sim.player.holy_power
-      duration *= 1 + 0.5 * @sim.player.talent_inquiry_of_faith
       @sim.player.holy_power = 0
     end
+    duration += 4 if @sim.player.set_bonus_t11_four_piece 
+
+    duration *= 1 + 0.5 * @sim.player.talent_inquiry_of_faith
 
     buff_expires_in(duration) 
 
+    @sim.mob.deal_damage(:inquisition, :hit, 0) # Just to count them 
     @sim.player.lock_gcd(:hasted => true)
   end
 
