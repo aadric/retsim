@@ -1,8 +1,8 @@
 # 1 object of this class = 1 sim
 class Simulation
-  attr_reader :runner, :mob, :stats, :priorities, :logger, :config_file
+  attr_reader :runner, :mob, :stats, :logger, :config_file
 
-  attr_accessor :player, :run_mode, :ignore_hp_for_inq
+  attr_accessor :player, :run_mode, :ignore_hp_for_inq, :priorities
 
   # Sim can be run based on a fixed length of time or on the mobs health
   attr_accessor :run_mode # :time, :boss_health

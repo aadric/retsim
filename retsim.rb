@@ -86,18 +86,18 @@ def calculate_weights(sim_factory)
 end
 
 def calculate_comparison
+  sim2 = Simulation.new.run do |sim|
+    sim.run_mode = :time
+    sim.priorities = PriorityWithT11Inq.new
+    sim.priorities.sim = sim
+  end
+
   sim1 = Simulation.new.run do |sim|
     sim.run_mode = :time
   end
 
-  sim2 = Simulation.new.run do |sim|
-    sim.priorities.word_of_glory = true
-    sim.player.talent_blazing_light = 1
-    sim.run_mode = :time
-  end
-
-  Reporting.new(sim1, :sim2 => sim2).generate_report
   Reporting.new(sim2, :file_name => "report2.html").generate_report
+  Reporting.new(sim1, :sim2 => sim2).generate_report
 
   puts sim1.dps.to_s
   puts sim2.dps.to_s

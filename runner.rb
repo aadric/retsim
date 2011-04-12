@@ -126,7 +126,7 @@ class Runner
           going = false
         end
         
-        if i % 1000 == 0 
+        if i % 1000 == 0 and false
           puts "fights = " + i.to_s
           puts "avg dps " + avg_dps.to_s
           puts "std dev " + standard_deviation.to_s
