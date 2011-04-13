@@ -16,7 +16,7 @@ class Simulation
     @player = Player.new(self)
     @stats = Statistics.new
 
-    @priorities = PriorityWithDelay.new
+    @priorities = PriorityWithT11Inq.new
     @priorities.sim = self # TODO why?
 
     @logger = Logger.new(self)

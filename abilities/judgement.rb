@@ -2,7 +2,7 @@ class Judgement < Ability
 
   def use
     # TODO this is all hardcorded for seal of truth
-    raise "Judgement still on cooldown" unless usable?
+    return unless usable?
 
     dmg = @sim.player.calculated_attack_power * 0.1421
     dmg += @sim.player.calculated_spell_power * 0.2229
@@ -31,4 +31,7 @@ class Judgement < Ability
     crit_chance += 0.06 * @sim.player.talent_arbiter_of_the_light
   end
 
+  def usable?
+    super and !@sim.player.gcd_locked?
+  end
 end

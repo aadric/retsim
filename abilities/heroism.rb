@@ -6,7 +6,7 @@ class Heroism < Ability
   end
 
   def use
-    raise "Can't user heroism yet" unless usable? 
+    return unless usable? 
 
     cooldown_up_in(10 * 60)
     

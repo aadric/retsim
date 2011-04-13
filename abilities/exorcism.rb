@@ -25,7 +25,12 @@ class Exorcism < Ability
     @art_of_war_proc ? true : false
   end
 
+  def usable?
+    @art_of_war_proc and !@sim.player.gcd_locked?
+  end
+
   def use
+    return unless usable?
     # assume we only cast this when a proc is up
     @art_of_war_proc = false
     # TODO clear event that would clear this proc since we just used it

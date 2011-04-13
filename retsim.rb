@@ -88,16 +88,18 @@ end
 def calculate_comparison
   sim2 = Simulation.new.run do |sim|
     sim.run_mode = :time
-    sim.priorities = PriorityWithT11Inq.new
+    sim.priorities = PriorityWithT11Inq.new(:exo_first => true)
     sim.priorities.sim = sim
   end
 
   sim1 = Simulation.new.run do |sim|
     sim.run_mode = :time
+    sim.priorities = PriorityWithT11Inq.new
+    sim.priorities.sim = sim
   end
 
-  Reporting.new(sim2, :file_name => "report2.html").generate_report
   Reporting.new(sim1, :sim2 => sim2).generate_report
+  Reporting.new(sim2, :file_name => "report2.html").generate_report
 
   puts sim1.dps.to_s
   puts sim2.dps.to_s

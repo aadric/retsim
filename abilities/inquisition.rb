@@ -6,7 +6,7 @@ class Inquisition < Ability
   end
 
   def use
-    raise "Can't use inquisition without holy power" unless useable?
+    return unless usable?
 
     if @sim.player.divine_purpose.active?
       @sim.player.divine_purpose.clear_buff
@@ -25,8 +25,8 @@ class Inquisition < Ability
     @sim.player.lock_gcd(:hasted => true)
   end
 
-  def useable?
-    @sim.player.has_holy_power
+  def usable?
+    @sim.player.has_holy_power and !@sim.player.gcd_locked?
   end
 
   module InquisitionBonus

@@ -178,7 +178,7 @@ class Player
   end
   
   def gcd_locked?
-    @gcd_lock==nil ? false : true
+    @gcd_lock ? true : false
   end
 
   def lock_gcd(params = {})

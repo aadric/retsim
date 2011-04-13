@@ -1,6 +1,7 @@
 class CrusaderStrike < Ability
 
   def use
+    return unless usable?
     dmg = @sim.player.weapon_damage(:normalized => true) * 1.35 
 
     dmg *= @sim.player.physical_bonus_multiplier
@@ -55,6 +56,10 @@ class CrusaderStrike < Ability
     return cooldown unless @sim.player.talent_sanctity_of_battle
     cooldown /= 1 + @sim.player.calculated_haste(:magic) / 100.0 # From Redcape's spreadsheet 5.16
     return cooldown
+  end
+
+  def usable?
+    return super and !@sim.player.gcd_locked?
   end
 
 end

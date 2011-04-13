@@ -14,9 +14,11 @@ class Consecration < Ability
   end
 
   def use
-    raise "Can't use conseration yet" unless usable?
+    return unless usable?
 
-    reset # This line would be important if you could overwrite consecrate 
+    # If the cooldown on consecreate is ever less than its duration,
+    # we will have to see how it works
+    # reset 
 
     # Tests indicated 27% scaling with AP and SP
     # http://elitistjerks.com/f76/t110335-paladin_simple_questions_cataclysmic_mode/p4/#post1889388
@@ -35,6 +37,10 @@ class Consecration < Ability
     @next_tick_event = @sim.new_event(self, "tick", 1) 
 
     @sim.player.lock_gcd(:hasted => true)
+  end
+
+  def usable?
+    return super and !@sim.player.gcd_locked?
   end
 
   def tick

@@ -27,6 +27,7 @@ class GuardianOfAncientKings < Ability
   end
   
   def use
+    return unless usable?
     @buff_count = 0
 
     # Realistically, the pet doesn't hit right away

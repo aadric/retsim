@@ -5,7 +5,7 @@ class HolyWrath < Ability
   end
 
   def use
-    raise "Holy Wrath on cooldown" unless usable?
+    return unless usable?
 
     dmg = 2402 # TODO confirm
     dmg += 0.61 * @sim.player.calculated_spell_power
@@ -20,6 +20,10 @@ class HolyWrath < Ability
     @sim.player.lock_gcd(:hasted => true)
 
     cooldown_up_in(15)
+  end
+
+  def usable?
+    super and !@sim.player.gcd_locked?
   end
 
 end

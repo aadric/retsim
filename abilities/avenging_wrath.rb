@@ -6,7 +6,7 @@ class AvengingWrath < Ability
   end
 
   def use
-    raise "Can't use avenging wrath yet" unless usable?
+    return unless usable?
     cooldown = 3 * 60 # 3 minutes
 
     cooldown -= 20 * @sim.player.talent_sanctified_wrath if @sim.player.talent_sanctified_wrath # Less 20 seconds per point in talent
