@@ -39,6 +39,22 @@ class Array
   def random
     return self[rand(size)]
   end
+
+  def uniq_by_comparator
+    ret = []
+
+    self.each do |var|
+      if ret.select { |x| yield x,var }.empty?
+        ret << var
+      end
+    end
+    ret
+  end
+
+  def uniq_by_comparator!(&block)
+    ret = uniq_by_comparator(&block)
+    replace ret
+  end
 end
 
 # returns a number in [min,max]

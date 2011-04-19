@@ -20,6 +20,28 @@ class Priority
   end
 end
 
+class PriorityFromString < Priority
+  def initialize(sim, priority_string)
+    super(sim)
+    @priority_string = priority_string
+  end
+
+  def execute
+    eval(@priority_string)
+  end
+end
+
+class PriorityFromFile < Priority
+  def initialize(sim, filename)
+    super(sim)
+    @priority_string = IO.read(filename)
+  end
+
+  def execute
+    eval(@priority_string)
+  end
+end
+
 class PriorityWithT11Inq < Priority
 
   def initialize(sim, opts = {})

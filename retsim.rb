@@ -123,10 +123,11 @@ def single_run
   puts sim.dps.to_s
 end
 
-calculate_weights(SimFactory)
+#calculate_weights(SimFactory)
 #calculate_ideal_delay
 #calculate_comparison
 #single_run
+run_evolution
 exit
 
 delay = 0.5

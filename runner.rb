@@ -13,9 +13,9 @@ class Runner
     @queue = PriorityQueue.new
 
     #@confidence_level = 1.644854 # 90%
-    #@confidence_level = 1.95996 # 95%
-    @confidence_level = 2.32635 # 98%
-    @margin_of_error_allowed = 20 # +/- dps
+    @confidence_level = 1.95996 # 95%
+    #@confidence_level = 2.32635 # 98%
+    @margin_of_error_allowed = 50 # +/- dps
 
     # Don't use anything less than 98% and +/- 20 DPS for anything serious
   end
@@ -129,7 +129,7 @@ class Runner
           going = false
         end
         
-        if i % 1000 == 0
+        if i % 100 == 0 and false
           puts "fights = " + i.to_s
           puts "avg dps " + avg_dps.round.to_s
           puts "std dev " + standard_deviation.round_to(2).to_s

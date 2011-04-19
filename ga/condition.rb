@@ -1,5 +1,4 @@
 class Condition
-
   CONDITIONS = []
   CONDITIONS << ["inquisition", "buff_remaining", {:type => :comparator, :max => 40}]
   CONDITIONS << ["","holy_power", {:type => :comparator, :max => 3}] 
@@ -14,9 +13,51 @@ class Condition
   CONDITIONS << ["runner", "time_left", {:type => :comparator, :max => Runner::FIGHT_LENGTH}]
   CONDITIONS << ["avenging_wrath", "cooldown_remaining", {:type => :comparator, :max => 180}]
   CONDITIONS << ["avenging_wrath", "buff_remaining", {:type => :comparator, :max => 20}]
-  CONDITIONS << ["mob", "flavour_country?"]
+  CONDITIONS << ["mob", "flavor_country?"]
 
-  def initialize
+  def initialize(opts = {})
+    if opts[:string]
+      create_from_string(opts[:string])
+    else
+      create_random_condition
+    end
+  end
+
+  def create_from_string(str)
+    obj_and_method, operator, value = *str.partition(/[<>]/).map {|x| x.strip}
+    
+    @type = operator.empty? ? :negation : :comparator
+
+    @obj, @method = *obj_and_method.split(".")
+    if(@method.nil?)
+      @method = @obj
+      @obj = ""
+    end
+
+    if @type == :comparator
+      @operator = operator
+      @value = value.to_f
+      @min = find_min
+      @max = find_max
+    else
+      @negation = @obj[0]=="!" ? "!" : ""
+      @obj = @obj.delete("!")
+    end
+  end
+
+  def find_min
+    obj = @obj.delete("!")
+    arr = CONDITIONS.select {|x| x[0] == obj}
+    return arr[0][2][:min]
+  end
+
+  def find_max
+    obj = @obj.delete("!")
+    arr = CONDITIONS.select {|x| x[0] == obj}
+    return arr[0][2][:max]
+  end
+
+  def create_random_condition
     @obj, @method, opts = *CONDITIONS.random
 
     opts ||= {}
