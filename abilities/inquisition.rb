@@ -6,7 +6,7 @@ class Inquisition < Ability
   end
 
   def use
-    return unless usable?
+    raise "Error" unless usable?
 
     if @sim.player.divine_purpose.active?
       @sim.player.divine_purpose.clear_buff
@@ -26,7 +26,7 @@ class Inquisition < Ability
   end
 
   def usable?
-    @sim.player.has_holy_power and !@sim.player.gcd_locked?
+    @sim.player.has_holy_power and super
   end
 
   module InquisitionBonus

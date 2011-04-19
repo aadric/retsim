@@ -16,14 +16,12 @@ class Simulation
     @player = Player.new(self)
     @stats = Statistics.new
 
-    @priorities = PriorityWithT11Inq.new
-    @priorities.sim = self # TODO why?
+    #@priorities = PriorityWithT11Inq.new(self)
 
     @logger = Logger.new(self)
+    @logger.enabled = opts[:logging_enabled] ||= false
 
     ConfigParser.parse(config_file, self)
-
-    @ignore_hp_for_inq = false
 
     yield self if block_given?
   end

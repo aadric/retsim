@@ -5,6 +5,11 @@ class Ability
     @sim = sim
   end
 
+  def attempt
+    return unless usable?
+    use
+  end
+
   def reset
     off_cooldown
     clear_buff(:reset => true)
@@ -20,9 +25,11 @@ class Ability
     @cooldown_reset_event ? true : false
   end
 
-  def usable?
+  def usable?(opts = {})
+    on_gcd = opts[:on_gcd] ||= true
     return false if on_cooldown?
-    true
+    return false if on_gcd and @sim.player.gcd_locked?
+    return true
   end
 
   # Returns time until cooldown is up in seconds

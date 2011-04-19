@@ -1,7 +1,7 @@
 class HammerOfWrath < Ability
 
   def use
-    return unless usable?
+    raise "Error" unless usable?
 
     dmg = random(3815, 4215)
     dmg += @sim.player.calculated_attack_power * 0.39
@@ -23,7 +23,7 @@ class HammerOfWrath < Ability
 
 
   def usable?
-    super and (@sim.mob.flavor_country? or @sim.player.avenging_wrath.active?) and !@sim.player.gcd_locked?
+    super and (@sim.mob.flavor_country? or @sim.player.avenging_wrath.active?)
   end
 
   def crit_chance

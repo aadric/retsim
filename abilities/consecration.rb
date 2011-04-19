@@ -14,7 +14,7 @@ class Consecration < Ability
   end
 
   def use
-    return unless usable?
+    raise "Error" unless usable?
 
     # If the cooldown on consecreate is ever less than its duration,
     # we will have to see how it works
@@ -37,10 +37,6 @@ class Consecration < Ability
     @next_tick_event = @sim.new_event(self, "tick", 1) 
 
     @sim.player.lock_gcd(:hasted => true)
-  end
-
-  def usable?
-    return super and !@sim.player.gcd_locked?
   end
 
   def tick

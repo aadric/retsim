@@ -6,7 +6,7 @@ class AvengingWrath < Ability
   end
 
   def use
-    return unless usable?
+    raise "Error" unless usable?
     cooldown = 3 * 60 # 3 minutes
 
     cooldown -= 20 * @sim.player.talent_sanctified_wrath if @sim.player.talent_sanctified_wrath # Less 20 seconds per point in talent
@@ -17,6 +17,10 @@ class AvengingWrath < Ability
 
     @sim.mob.deal_damage(:avenging_wrath, :hit, 0) # Just to count them 
     # Avenging Wrath is off the GCD
+  end
+
+  def usable?
+    super(:on_gcd => false)
   end
 
   module AugmentMultipliers

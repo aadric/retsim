@@ -1,7 +1,7 @@
 class TemplarsVerdict < Ability
 
   def use
-    raise "No Holy Power for Templar's Verdict" unless usable?
+    raise "Error" unless usable?
 
     if @sim.player.divine_purpose.active?
       modifier = 2.35
@@ -60,6 +60,6 @@ class TemplarsVerdict < Ability
   end
 
   def usable?
-    @sim.player.has_holy_power
+    @sim.player.has_holy_power and super
   end
 end

@@ -8,7 +8,7 @@ class WordOfGlory < Ability
   end
 
   def use
-    raise "Not usable" unless usable?
+    raise "Error" unless usable?
     
     clear_buff
     
@@ -20,7 +20,7 @@ class WordOfGlory < Ability
       @sim.player.holy_power = 0 if random > 0.3
     end
 
-    buff_expires_in(30)
+    buff_expires_in(10)
 
     @sim.mob.deal_damage(:word_of_glory, :hit, 0) # Just to count them 
     @sim.player.lock_gcd(:hasted => true)
@@ -28,7 +28,7 @@ class WordOfGlory < Ability
 
 
   def usable?
-    @sim.player.has_holy_power
+    @sim.player.has_holy_power and super
   end
 
   module SelflessHealer

@@ -5,7 +5,7 @@ class HolyWrath < Ability
   end
 
   def use
-    return unless usable?
+    raise "Error" unless usable?
 
     dmg = 2402 # TODO confirm
     dmg += 0.61 * @sim.player.calculated_spell_power
@@ -21,9 +21,4 @@ class HolyWrath < Ability
 
     cooldown_up_in(15)
   end
-
-  def usable?
-    super and !@sim.player.gcd_locked?
-  end
-
 end

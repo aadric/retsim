@@ -7,7 +7,7 @@ class Zealotry < Ability
   end
 
   def use
-    raise "Can't use Zealotry yet" unless usable?
+    raise "Error" unless usable?
 
     cooldown_up_in(2 * 60)
 
@@ -17,7 +17,7 @@ class Zealotry < Ability
   end
 
   def usable?
-    super and @sim.player.has_holy_power(3)
+    super(:on_gcd => false) and @sim.player.has_holy_power(3)
   end
 
   module ZealotryCheck

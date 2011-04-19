@@ -6,11 +6,15 @@ class Heroism < Ability
   end
 
   def use
-    return unless usable? 
+    raise "Error" unless usable? 
 
     cooldown_up_in(10 * 60)
     
     buff_expires_in(40)
+  end
+
+  def usable?
+    super(:on_gcd => false)
   end
 
   module HeroismHasteModifier

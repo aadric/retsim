@@ -1,5 +1,6 @@
 class Runner
-  attr_reader :duration, :current_time, :fights, :queue, :start_time, :fight_length
+  FIGHT_LENGTH = 330
+  attr_reader :duration, :current_time, :fights, :queue, :start_time
 
   class Pair
     attr_accessor :time, :event
@@ -17,8 +18,10 @@ class Runner
     @margin_of_error_allowed = 20 # +/- dps
 
     # Don't use anything less than 98% and +/- 20 DPS for anything serious
-    
-    @fight_length = 330
+  end
+
+  def fight_length
+    Runner::FIGHT_LENGTH
   end
 
   def inspect_queue(event)
@@ -126,12 +129,12 @@ class Runner
           going = false
         end
         
-        if i % 1000 == 0 and false
+        if i % 1000 == 0
           puts "fights = " + i.to_s
-          puts "avg dps " + avg_dps.to_s
-          puts "std dev " + standard_deviation.to_s
-          puts "std_err" + standard_error.to_s
-          puts "margin_of_error = " + margin_of_error.to_s
+          puts "avg dps " + avg_dps.round.to_s
+          puts "std dev " + standard_deviation.round_to(2).to_s
+          puts "std_err " + standard_error.round_to(2).to_s
+          puts "margin_of_error = " + margin_of_error.round_to(2).to_s
         end
       end
 

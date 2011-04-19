@@ -12,6 +12,7 @@ require_relative "config_parser"
 require_relative "simulation.rb"
 require_relative "priorities.rb"
 require_relative "logger.rb"
+require_relative "ga/test.rb"
 
 require_relative "abilities/ability.rb"
 Dir["abilities/*.rb"].each {|file| require_relative file}
@@ -88,14 +89,12 @@ end
 def calculate_comparison
   sim2 = Simulation.new.run do |sim|
     sim.run_mode = :time
-    sim.priorities = PriorityWithT11Inq.new(:exo_first => true)
-    sim.priorities.sim = sim
+    sim.priorities = PriorityWithT11Inq.new(sim, :consecrate => false)
   end
 
   sim1 = Simulation.new.run do |sim|
     sim.run_mode = :time
-    sim.priorities = PriorityWithT11Inq.new
-    sim.priorities.sim = sim
+    sim.priorities = PriorityWithT11Inq.new(sim)
   end
 
   Reporting.new(sim1, :sim2 => sim2).generate_report
@@ -109,16 +108,25 @@ end
 class SimFactory
   def self.new_sim
     sim2 = Simulation.new do |sim|
-      sim.priorities.word_of_glory = true
-      sim.player.talent_blazing_light = 1
       sim.run_mode = :time
+      sim.priorities = PriorityWithT11Inq.new(sim)
     end
   end
 end
 
-#calculate_weights(SimFactory)
+def single_run
+  sim = Simulation.new.run do |sim|
+    sim.run_mode = :time
+  end
+
+  Reporting.new(sim).generate_report
+  puts sim.dps.to_s
+end
+
+calculate_weights(SimFactory)
 #calculate_ideal_delay
-calculate_comparison
+#calculate_comparison
+#single_run
 exit
 
 delay = 0.5

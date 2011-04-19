@@ -25,9 +25,14 @@ class GuardianOfAncientKings < Ability
       @sim.player.send(ability_name).extend(ProcAncientPower)
     end
   end
+
+  def usable?
+    # TODO confirm off GCD
+    super(:on_gcd => false)
+  end
   
   def use
-    return unless usable?
+    raise "Error" unless usable?
     @buff_count = 0
 
     # Realistically, the pet doesn't hit right away
@@ -37,6 +42,8 @@ class GuardianOfAncientKings < Ability
     cooldown_up_in(5 * 60)
 
     buff_expires_in(30)
+
+    # TODO confirm off GCD
   end
 
   def clear_buff(opts = {})

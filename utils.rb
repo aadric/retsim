@@ -35,6 +35,12 @@ class Fixnum
   end
 end
 
+class Array
+  def random
+    return self[rand(size)]
+  end
+end
+
 # returns a number in [min,max]
 # if passed with no arguments, returns a floating point in [0,1)
 def random(min=0, max=0)
@@ -43,4 +49,11 @@ def random(min=0, max=0)
   else
     min + rand(1+max-min)
   end
+end
+
+# Coin flip, optionally weighted
+def coin_flip(v1=1, v2=1)
+  raise "Poor argument to coin_flip" if v1<=0 or v2<=0
+  weight = v1.to_f / (v1 + v2)
+  return random < weight
 end
