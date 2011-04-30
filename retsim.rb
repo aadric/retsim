@@ -109,13 +109,14 @@ class SimFactory
   def self.new_sim
     sim2 = Simulation.new do |sim|
       sim.run_mode = :time
-      sim.priorities = PriorityWithT11Inq.new(sim)
+      sim.priorities = PriorityFromGA.new(sim)
     end
   end
 end
 
 def single_run
   sim = Simulation.new.run do |sim|
+    sim.priorities = PriorityFromGA.new(sim)
     sim.run_mode = :time
   end
 
@@ -123,11 +124,30 @@ def single_run
   puts sim.dps.to_s
 end
 
-#calculate_weights(SimFactory)
+calculate_weights(SimFactory)
 #calculate_ideal_delay
 #calculate_comparison
 #single_run
-run_evolution
+#run_evolution
+#analyze_generation(14, :rank => true)
+#generate_random_series
+
+#alternative_method
+exit
+
+sim = Simulation.new do |sim|
+  sim.run_mode = :time
+end
+
+while true
+  sim.run
+end
+
+exit
+(1..999).each do |i|
+  analyze_generation(i, :rank => true)
+  run_this(i)
+end
 exit
 
 delay = 0.5

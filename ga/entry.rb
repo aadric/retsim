@@ -30,6 +30,18 @@ class Entry
     end
   end
 
+  def add_random_condition
+    @conditions << Condition.new
+  end
+
+  def delete_random_condition
+    @conditions.delete(@conditions.sample)
+  end
+
+  def mutate_random_condition
+    @conditions.sample.mutate
+  end
+
   def conditions_empty?
     @conditions.empty?
   end

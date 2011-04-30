@@ -16,7 +16,7 @@ class Simulation
     @player = Player.new(self)
     @stats = Statistics.new
 
-    #@priorities = PriorityWithT11Inq.new(self)
+    @priorities = PriorityWithT11Inq.new(self)
 
     @logger = Logger.new(self)
     @logger.enabled = opts[:logging_enabled] ||= false
@@ -30,10 +30,22 @@ class Simulation
     Event.new(self, obj, method_name, interval, identifier)
   end
 
-  def run
+  def run(opts = {})
+    if margin_of_error and margin_of_error < 20
+      puts "Run Aborted"
+      return
+    end
     yield self if block_given?
-    @runner.run 
+    @runner.run(opts)
     self
+  end
+
+  def margin_of_error
+    @runner.margin_of_error
+  end
+
+  def dps_range
+    (dps - margin_of_error).round..(dps + margin_of_error).round
   end
   
   def dps

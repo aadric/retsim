@@ -42,6 +42,37 @@ class PriorityFromFile < Priority
   end
 end
 
+class PriorityFromGA < Priority
+  
+  def execute
+    guardian_of_ancient_kings.attempt if inquisition.buff_remaining < 0.1
+    inquisition.attempt if inquisition.buff_remaining < 0.1
+    crusader_strike.attempt if holy_power < 3.0
+    exorcism.attempt
+    guardian_of_ancient_kings.attempt
+    use_trinkets if holy_power > 2.0 and !mob.flavor_country? and mob.flavor_country? and !divine_purpose.active? and zealotry.cooldown_remaining < 84.2
+    avenging_wrath.attempt if holy_power > 2.0
+    use_trinkets if divine_purpose.active? and zealotry.buff_remaining > 19.7
+    heroism.attempt if zealotry.cooldown_remaining < 0.1 and holy_power > 2.0
+    avenging_wrath.attempt if heroism.cooldown_remaining > 387.4 and heroism.buff_remaining > 13.9
+    avenging_wrath.attempt
+    zealotry.attempt if holy_power > 2.0
+    use_trinkets
+    hammer_of_wrath.attempt if avenging_wrath.buff_remaining < 12.0
+    heroism.attempt if !divine_purpose.active?
+    templars_verdict.attempt if divine_purpose.active?
+    templars_verdict.attempt if holy_power > 2.1
+    return if crusader_strike.cooldown_remaining < 0.4
+    hammer_of_wrath.attempt
+    return if crusader_strike.cooldown_remaining < 0.6
+    judgement.attempt
+    holy_wrath.attempt
+    consecration.attempt
+    zealotry.attempt
+  end
+end
+
+
 class PriorityWithT11Inq < Priority
 
   def initialize(sim, opts = {})

@@ -6,6 +6,22 @@ class String
   end
 end
 
+class Range
+  def intersection(other)  
+    raise ArgumentError, 'value must be a Range' unless other.kind_of?(Range)  
+  
+    min, max = first, exclude_end? ? max : last  
+    other_min, other_max = other.first, other.exclude_end? ? other.max : other.last  
+  
+    new_min = self === other_min ? other_min : other === min ? min : nil  
+    new_max = self === other_max ? other_max : other === max ? max : nil  
+  
+    new_min && new_max ? new_min..new_max : nil  
+  end  
+  
+  alias_method :&, :intersection  
+end
+
 class Float
   # Probablistic rounding
   # 3.4 is 3 60% of the time and 4 40% of the time.
@@ -37,7 +53,7 @@ end
 
 class Array
   def random
-    return self[rand(size)]
+    sample
   end
 
   def uniq_by_comparator

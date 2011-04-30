@@ -16,6 +16,8 @@ class Condition
   CONDITIONS << ["mob", "flavor_country?"]
 
   def initialize(opts = {})
+    @enabled = true
+
     if opts[:string]
       create_from_string(opts[:string])
     else
@@ -76,6 +78,16 @@ class Condition
     end
   end
 
+  def mutate
+    case @type
+      when :comparator
+        value = @value.to_f
+        @value = [value/2,value*2,value-0.1,value+0.1].sample
+      when :negation
+        @negation = @negation=="!" ? "" : "!"
+    end
+  end
+
   def to_s
     s = @method
     s = @obj + "." + s unless @obj.empty?
@@ -98,18 +110,6 @@ class Condition
       @operator = coin_flip ? "<" : ">"
     else
       @negation = coin_flip ? "!" : ""
-    end
-  end
-
-  def mutate
-    if @type == :comparator
-      if coin_flip
-        @operator = @operator=="<" ? ">" : "<"
-      else
-        @value = random_value
-      end
-    else
-      @negation = @negation=="!" ? "" : "!"
     end
   end
 

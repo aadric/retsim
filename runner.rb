@@ -1,6 +1,6 @@
 class Runner
   FIGHT_LENGTH = 330
-  attr_reader :duration, :current_time, :fights, :queue, :start_time
+  attr_reader :duration, :current_time, :fights, :queue, :start_time, :margin_of_error
 
   class Pair
     attr_accessor :time, :event
@@ -15,9 +15,14 @@ class Runner
     #@confidence_level = 1.644854 # 90%
     @confidence_level = 1.95996 # 95%
     #@confidence_level = 2.32635 # 98%
-    @margin_of_error_allowed = 50 # +/- dps
+    @margin_of_error_allowed = 20 # +/- dps
+
+    @percent_error_allowed = 0.005 # +/-
 
     # Don't use anything less than 98% and +/- 20 DPS for anything serious
+
+    @fights = []
+    @last_damage = 0
   end
 
   def fight_length
@@ -54,27 +59,25 @@ class Runner
     fight_length - (current_time - @start_time) / 1000.0
   end
 
-  def run
+  def run(opts = {})
+    run_count = opts[:count] ||= 50
     tick = 0
     i = 0
-    @start_time = 0
-    dpses = []
     going = true
 
-    last_damage = 0
     while going
       @start_time = current_time
       i += 1
 
-      if i>=2
-        @sim.logger.enabled = false
-      end
+      @sim.logger.enabled = false
 
       @sim.player.autoattack.use
       @sim.priorities.execute # I should probably judge here
 
+      duration = random(fight_length-20, fight_length+20)
+
       if @sim.run_mode == :time
-        while (current_time - @start_time) / 1000.0 <= fight_length
+        while (current_time - @start_time) / 1000.0 <= duration
           unless @queue.empty?
             event = @queue.pop
             
@@ -105,36 +108,39 @@ class Runner
         end
       end
 
-      this_fights_damage = @sim.stats.total_damage - last_damage
+      this_fights_damage = @sim.stats.total_damage - @last_damage
       this_fights_duration = current_time - @start_time
 
-      dpses << this_fights_damage / (this_fights_duration / 1000.0)
+      @fights << this_fights_damage / (this_fights_duration / 1000.0)
       
-      last_damage = @sim.stats.total_damage
-      last_time = current_time
+      @last_damage = @sim.stats.total_damage
 
-      if(i % 100 == 0)
+      if(i % run_count == 0)
         avg_dps = @sim.stats.total_damage / (current_time / 1000.0)
 
 
-        standard_deviation = dpses.inject(0) do |sum, item|
+        standard_deviation = @fights.inject(0) do |sum, item|
           sum += (item - avg_dps) ** 2 
         end
 
-        standard_deviation = (standard_deviation / (dpses.size-1)) ** 0.5
-        standard_error = standard_deviation / (dpses.size ** 0.5)
-        margin_of_error = standard_error * @confidence_level
+        standard_deviation = (standard_deviation / (@fights.size-1)) ** 0.5
+        standard_error = standard_deviation / (@fights.size ** 0.5)
+        @margin_of_error = standard_error * @confidence_level
 
-        if(margin_of_error <= @margin_of_error_allowed and dpses.size >= 100) 
+        if(margin_of_error <= @margin_of_error_allowed) 
           going = false
         end
-        
-        if i % 100 == 0 and false
-          puts "fights = " + i.to_s
+        #if(margin_of_error <= avg_dps * @percent_error_allowed)
+          #going = false
+        #end
+        #going = false
+       
+        if false
+          puts "fights = " + @fights.count.to_s
           puts "avg dps " + avg_dps.round.to_s
-          puts "std dev " + standard_deviation.round_to(2).to_s
-          puts "std_err " + standard_error.round_to(2).to_s
-          puts "margin_of_error = " + margin_of_error.round_to(2).to_s
+          #puts "std dev " + standard_deviation.round_to(2).to_s
+          #puts "std_err " + standard_error.round_to(2).to_s
+          puts "margin_of_error = " + @margin_of_error.round_to(2).to_s
         end
       end
 
